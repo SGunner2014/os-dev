@@ -1,0 +1,20 @@
+global load_gdt
+
+; loads gdt table
+; stack: [esp + 4] -> gdt address
+;        [esp + 0] -> return address
+load_gdt:
+    mov eax, [esp + 4]
+    lgdt [eax]
+
+    ; Set data segment registers
+    mov ax, 0x10
+    mov ds, ax
+    mov ss, ax
+    mov es, ax
+
+    ; Set code segment register - perform a far jump
+    jmp 0x08:flush_cs
+
+flush_cs:
+    ret
