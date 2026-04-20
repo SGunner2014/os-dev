@@ -27,7 +27,7 @@ os.iso: kernel.elf
 					iso
 
 run: os.iso
-	qemu-system-x86_64 -cdrom os.iso -m 32
+	qemu-system-i386 -cdrom os.iso -m 32 -serial stdio -d int -no-reboot
 
 %.o: %.c
 	$(CC) $(CFLAGS) $< -o $@

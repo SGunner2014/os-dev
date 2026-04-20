@@ -1,4 +1,5 @@
 #include "io.h"
+#include "misc/utils.h"
 #include "screen.h"
 #include "gdt.h"
 #include "idt.h"
@@ -15,7 +16,7 @@
 #define FB_LOW_BYTE_COMMAND 15
 
 
-char *fb = (char *) 0x000B8000;
+char *fb = (char *) 0xC00B8000;
 
 void fb_write_cell(unsigned int i, char c, unsigned char fg, unsigned char bg)
 {
@@ -34,8 +35,18 @@ void fb_move_cursor(unsigned short pos)
     outb(FB_DATA_PORT, pos & 0x00FF);
 }
 
-void kmain(void)
+void kmain(
+    unsigned int kernel_physical_end,
+    unsigned int kernel_end,
+    unsigned int kernel_physical_start,
+    unsigned int kernel_start
+)
 {
+    UNUSED(kernel_start);
+    UNUSED(kernel_physical_start);
+    UNUSED(kernel_end);
+    UNUSED(kernel_physical_end);
+
     fb_move_cursor(0);
     clear_screen();
     prints("Hello, world!\n");

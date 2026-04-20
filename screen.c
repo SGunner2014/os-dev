@@ -9,7 +9,7 @@ const unsigned int VGA_WIDTH = 80;
 const unsigned int VGA_HEIGHT = 25;
 const unsigned int MAX_POS = VGA_WIDTH * VGA_HEIGHT - 1;
 
-static char *fb = (char*) 0x000B8000;
+static char *fb = (char*) 0xC00B8000;
 
 static void scroll_screen();
 
