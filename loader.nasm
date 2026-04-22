@@ -66,6 +66,7 @@ higher_half:
 
     mov esp, kernel_stack + KERNEL_STACK_SIZE
 
+    push ebx
     push _kernel_start
     push _kernel_physical_start
     push _kernel_end

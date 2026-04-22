@@ -1,8 +1,10 @@
 #include "io.h"
-#include "misc/utils.h"
 #include "screen.h"
-#include "gdt.h"
+#include "cpu/gdt.h"
+#include "cpu/mem.h"
 #include "idt.h"
+#include "misc/utils.h"
+#include "cpu/multiboot.h"
 #include "drivers/keyboard.h"
 
 #define FB_GREEN 2
@@ -39,16 +41,23 @@ void kmain(
     unsigned int kernel_physical_end,
     unsigned int kernel_end,
     unsigned int kernel_physical_start,
-    unsigned int kernel_start
+    unsigned int kernel_start,
+    struct multiboot_struct *multiboot_addr
 )
 {
-    UNUSED(kernel_start);
-    UNUSED(kernel_physical_start);
-    UNUSED(kernel_end);
-    UNUSED(kernel_physical_end);
+    clear_screen();
+    init_paging(
+        kernel_start,
+        kernel_physical_start,
+        kernel_end,
+        kernel_physical_end
+    );
+
+    struct sysinfo info = read_multiboot(multiboot_addr);
+    UNUSED(multiboot_addr);
+    UNUSED(info);
 
     fb_move_cursor(0);
-    clear_screen();
     prints("Hello, world!\n");
 
     // Load gdt
@@ -57,6 +66,18 @@ void kmain(
     // Load interrupts
     idt_init();
     prints("Set IDT\n");
+
+    prints("Multiboot structure was at: 0x");
+    char buff[64];
+    itoa(info.struct_addr, buff, 16);
+    prints(buff);
+    prints("\n");
+
+    prints("Boot complete, total memory detected: ");
+    char memstr[256];
+    format_memory_str(info.total_memory, memstr);
+    prints(memstr);
+    prints("\n");
 
     init_keyboard();
 }

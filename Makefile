@@ -1,4 +1,4 @@
-OBJECTS = loader.o kmain.o io.o screen.o gdt_asm.o gdt.o idt.o idt_asm.o misc/utils.o drivers/keyboard.o
+OBJECTS = loader.o kmain.o io.o screen.o cpu/gdt_asm.o cpu/gdt.o idt.o idt_asm.o misc/utils.o drivers/keyboard.o cpu/mem.o cpu/mem_asm.o cpu/multiboot.o
 CC = x86_64-elf-gcc
 CFLAGS = -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector \
 				 -nostartfiles -nodefaultlibs -Wall -Wextra -Werror -c \
@@ -27,12 +27,12 @@ os.iso: kernel.elf
 					iso
 
 run: os.iso
-	qemu-system-i386 -cdrom os.iso -m 32 -serial stdio -d int -no-reboot
+	qemu-system-i386 -cdrom os.iso -m 2048 -serial stdio -d int,cpu_reset -no-reboot
 
 %.o: %.c
 	$(CC) $(CFLAGS) $< -o $@
 
-%.o: %.s
+%.o: %.nasm
 	$(AS) $(ASFLAGS) $< -o $@
 
 clean:
