@@ -10,8 +10,6 @@ static pte_t kernel_pte[256][1024] __attribute__((aligned(4096)));
 
 static uint32_t *pagebitmap;
 
-uint32_t bitmap[32768];
-
 void paging_load_directory(pde_t *pde)
 {
     uint32_t p_pde = (uint32_t) pde - 0xC0000000;
