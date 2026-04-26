@@ -37,6 +37,15 @@ void fb_move_cursor(unsigned short pos)
     outb(FB_DATA_PORT, pos & 0x00FF);
 }
 
+void handle_page_fault(struct cpu_state *cpu)
+{
+    UNUSED(cpu);
+
+    prints("Page fault\n");
+
+    for (;;);
+}
+
 void kmain(
     unsigned int kernel_physical_end,
     unsigned int kernel_end,
@@ -80,4 +89,9 @@ void kmain(
     prints("\n");
 
     init_keyboard();
+    register_interrupt_handler(0x0E, handle_page_fault);
+
+    // Trigger a page fault by accessing unmapped memory
+    uint32_t *test = (uint32_t*) 0xD0000000;
+    test[0] = 123;
 }

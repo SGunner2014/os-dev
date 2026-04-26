@@ -33,29 +33,23 @@ void init_paging(
 
     // We are bootstrapped to this point using the default 1mb page map
     // We want to setup our own which covers the whole of the kernel
-    for (uint32_t pde_offset = 0; pde_offset < 256; pde_offset++)
-    {
-        for (uint32_t pte_offset = 0; pte_offset < 1024; pte_offset++)
-        {
-            uint32_t p_addr = ((pde_offset * 1024 + pte_offset) * 4096);
-            kernel_pte[pde_offset][pte_offset] = p_addr | PTE_PRESENT | PTE_RW;
-        }
+    // First: We want to calculate the number of pages we need to map the kernel
+    uint32_t p_count = kernel_physical_end / 4096 + 1;
 
-        // Now write the page directories
-        uint32_t p_pt = (uint32_t) kernel_pte[pde_offset] - 0xC0000000;
-        kernel_pde[pde_offset + 768] = p_pt | PTE_PRESENT | PTE_RW;
+    for (uint32_t i = 0; i < p_count; i++)
+    {
+        uint32_t pde_offset = i / 1024;
+        uint32_t pte_offset = i % 1024;
+
+        // phys addr = directory * 1024 + page * 4096 bytes
+        uint32_t p_addr = i * 4096;
+        kernel_pte[pde_offset][pte_offset] = p_addr | PTE_PRESENT | PTE_RW;
+
+        if (pte_offset == 0) {
+            uint32_t p_pt = (uint32_t) kernel_pte[pde_offset] - 0xC0000000;
+            kernel_pde[pde_offset + 768] = p_pt | PTE_PRESENT | PTE_RW;
+        }
     }
 
     paging_load_directory(kernel_pde);
-
-    // Test the paging
-    // CPU will page fault if messed up
-    uint32_t *test = (uint32_t*) 0xD0000000;
-    *test = 0xDEADBEEF;
-
-    if (*test == 0xDEADBEEF) {
-        prints("Successfully setup paging!\n");
-    } else {
-        prints("Failed to setup paging!\n");
-    }
 }
