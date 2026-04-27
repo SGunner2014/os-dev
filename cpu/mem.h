@@ -15,6 +15,9 @@
 
 #define ADDRESS_MASK    0xFFFFF000
 
+#define TOTAL_PAGE_NUMBER (1024 * 1024)
+#define TOTAL_BITMAP_NUMBER (TOTAL_PAGE_NUMBER / 32)
+
 extern void load_paging_directory(uint32_t p_pde);
 
 
@@ -61,5 +64,8 @@ void init_paging(
     uint32_t kernel_end,
     uint32_t kernel_physical_end
 );
+
+uint32_t kalloc_page();
+uint32_t kfree_page(uint32_t);
 
 #endif

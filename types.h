@@ -22,4 +22,6 @@ typedef void (*void_function_t)(void);
 #define true 1
 #define false 0
 
+#define MAX_UINT32_T 4294967295
+
 #endif

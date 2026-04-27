@@ -53,3 +53,38 @@ void init_paging(
 
     paging_load_directory(kernel_pde);
 }
+
+static uint32_t find_free_page(uint32_t bitmap_entry)
+{
+
+}
+
+/*
+ * Allocats a page, returns the base address of the page 
+ */
+uint32_t kalloc_page()
+{
+    for (uint32_t i = 0; i < TOTAL_BITMAP_NUMBER; i++)
+    {
+        // If we have space in this bitmap
+        if (pagebitmap[i] < MAX_UINT32_T) {
+            uint32_t page_num = i * 32;
+
+            for (uint32_t j = 0; j < 32; j++) {
+                // This page is free if not marked already
+                if (!((pagebitmap[i] >> j) & 0x1)) {
+                    pagebitmap[i] |= (0x1 << j);
+                    page_num += j;
+                    return page_num * 4096;
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
+uint32_t kfree_page(uint32_t page)
+{
+
+}
