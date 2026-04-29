@@ -10,7 +10,7 @@ static pte_t kernel_pte[256][1024] __attribute__((aligned(4096)));
 
 static uint32_t *pagebitmap;
 
-void paging_load_directory(pde_t *pde)
+static void paging_load_directory(pde_t *pde)
 {
     uint32_t p_pde = (uint32_t) pde - 0xC0000000;
     load_paging_directory(p_pde);
@@ -54,15 +54,10 @@ void init_paging(
     paging_load_directory(kernel_pde);
 }
 
-static uint32_t find_free_page(uint32_t bitmap_entry)
-{
-
-}
-
 /*
- * Allocats a page, returns the base address of the page 
+ * Allocates a page, returns the base address of the page 
  */
-uint32_t kalloc_page()
+static uint32_t kalloc_frame()
 {
     for (uint32_t i = 0; i < TOTAL_BITMAP_NUMBER; i++)
     {
@@ -81,10 +76,24 @@ uint32_t kalloc_page()
         }
     }
 
-    return 0;
+    return PAGE_ALLOC_FAIL;
 }
 
-uint32_t kfree_page(uint32_t page)
+
+/*
+ * Allocates a frame, maps it to a page
+ */
+uint32_t kalloc_page()
 {
 
+}
+
+void kfree_page(uint32_t page)
+{
+    uint32_t page_number = page / 4096;
+
+    uint32_t bitmap_num = page_number / 32;
+    uint32_t offset = page_number % 32;
+
+    pagebitmap[bitmap_num] &= (~(0x1 << offset));
 }

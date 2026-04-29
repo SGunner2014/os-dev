@@ -18,6 +18,8 @@
 #define TOTAL_PAGE_NUMBER (1024 * 1024)
 #define TOTAL_BITMAP_NUMBER (TOTAL_PAGE_NUMBER / 32)
 
+#define PAGE_ALLOC_FAIL 0xFFFFFFFF
+
 extern void load_paging_directory(uint32_t p_pde);
 
 
@@ -66,6 +68,6 @@ void init_paging(
 );
 
 uint32_t kalloc_page();
-uint32_t kfree_page(uint32_t);
+void kfree_page(uint32_t);
 
 #endif
