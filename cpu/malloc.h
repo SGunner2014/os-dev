@@ -15,8 +15,19 @@ union header {
 
 typedef union header Header;
 
-Header *morecore(uint32_t nunits);
+typedef struct {
+    Header base;
+    Header *freep;
+} Heap;
+
+Header *kmorecore(uint32_t nunits, Heap* heap);
+Header *morecore(uint32_t nunits, Heap* heap);
+
 void *malloc(uint32_t size);
 void free(void *ptr);
+
+
+void *kmalloc(uint32_t size);
+void kfree(void *ptr);
 
 #endif

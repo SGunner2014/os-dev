@@ -70,7 +70,11 @@ void init_paging(
     uint32_t kernel_physical_end
 );
 
-uint32_t kalloc_page();
+uint32_t kalloc_page(uint32_t page_count);
 void kfree_page(uint32_t);
+
+uint32_t *create_page_directory();
+
+uint32_t allocate_pages(uint32_t page_count, uint32_t last_virt_addr, uint32_t *pd);
 
 #endif

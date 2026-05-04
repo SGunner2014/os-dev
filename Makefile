@@ -1,4 +1,4 @@
-OBJECTS = loader.o kmain.o io.o screen.o cpu/gdt_asm.o cpu/gdt.o idt.o idt_asm.o misc/utils.o drivers/keyboard.o cpu/mem.o cpu/mem_asm.o cpu/multiboot.o
+OBJECTS = loader.o kmain.o io.o screen.o cpu/gdt_asm.o cpu/gdt.o idt.o idt_asm.o misc/utils.o drivers/keyboard.o cpu/mem.o cpu/mem_asm.o cpu/multiboot.o cpu/malloc.o cpu/process.o
 CC = x86_64-elf-gcc
 CFLAGS = -m32 -nostdlib -nostdinc -fno-builtin -fno-stack-protector \
 				 -nostartfiles -nodefaultlibs -Wall -Wextra -Werror -c \

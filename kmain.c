@@ -6,6 +6,8 @@
 #include "misc/utils.h"
 #include "cpu/multiboot.h"
 #include "drivers/keyboard.h"
+#include "cpu/process.h"
+#include "cpu/malloc.h"
 
 #define FB_GREEN 2
 #define FB_DARK_GREY 8
@@ -91,23 +93,19 @@ void kmain(
     init_keyboard();
     register_interrupt_handler(0x0E, handle_page_fault);
 
-    uint32_t allocatedPage = kalloc_page();
-    itoa(allocatedPage, buff, 16);
-    prints("Allocated page: ");
+    prints("Before");
+    Process *process = create_process();
+    switch_process(process);
+
+    prints("Switching process");
+
+
+    char *test = (char*) malloc(sizeof(char));
+    prints("Malloc");
+    itoa((uint32_t) test, buff, 16);
+    prints("Allocated virt: ");
     prints(buff);
     prints("\n");
 
-    char *test = (char*) allocatedPage;
-    *test = 42;
-    if (*test == 42) {
-        prints("Success!\n");
-    } else {
-        prints("Whoops\n");
-    }
-
-    kfree_page(allocatedPage);
-    
-    prints("Success again!\n");
-
-    for (;;);
+    for (;;) ;
 }
