@@ -22,8 +22,9 @@ void strrev(char *buff)
     }
 }
 
-void itoa(const int32_t i, char *buff, const uint32_t base)
+void itoa(const int32_t j, char *buff, const uint32_t base)
 {
+    uint32_t i = (uint32_t) j;
     if (i == 0) {
         strcpy(buff, "0\0");
         return;
@@ -31,7 +32,8 @@ void itoa(const int32_t i, char *buff, const uint32_t base)
 
     char *buff2 = buff;
 
-    bool is_negative = i < 0;
+    // bool is_negative = i < 0;
+    bool is_negative = false;
     uint32_t copy = is_negative ? -i : i;
 
     while (copy > 0) {

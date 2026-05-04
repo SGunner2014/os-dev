@@ -3,6 +3,9 @@
 #ifndef INCLUDE_MEM_H
 #define INCLUDE_MEM_H
 
+#define PHYS_OFFSET     0xC0000000
+#define PAGE_SIZE       0x1000 // 4KB pages
+
 #define PTE_PRESENT     (1u << 0)
 #define PTE_RW          (1u << 1)
 #define PTE_USER        (1u << 2)

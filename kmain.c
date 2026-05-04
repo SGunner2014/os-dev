@@ -91,7 +91,23 @@ void kmain(
     init_keyboard();
     register_interrupt_handler(0x0E, handle_page_fault);
 
-    // Trigger a page fault by accessing unmapped memory
-    uint32_t *test = (uint32_t*) 0xD0000000;
-    test[0] = 123;
+    uint32_t allocatedPage = kalloc_page();
+    itoa(allocatedPage, buff, 16);
+    prints("Allocated page: ");
+    prints(buff);
+    prints("\n");
+
+    char *test = (char*) allocatedPage;
+    *test = 42;
+    if (*test == 42) {
+        prints("Success!\n");
+    } else {
+        prints("Whoops\n");
+    }
+
+    kfree_page(allocatedPage);
+    
+    prints("Success again!\n");
+
+    for (;;);
 }
