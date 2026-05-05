@@ -1,3 +1,5 @@
+#include "kmain.h"
+
 #include "io.h"
 #include "screen.h"
 #include "cpu/gdt.h"
@@ -8,7 +10,6 @@
 #include "cpu/multiboot.h"
 #include "drivers/keyboard.h"
 #include "cpu/process.h"
-#include "cpu/malloc.h"
 
 #define FB_GREEN 2
 #define FB_DARK_GREY 8
@@ -54,7 +55,7 @@ void kmain(
     unsigned int kernel_end,
     unsigned int kernel_physical_start,
     unsigned int kernel_start,
-    struct multiboot_struct *multiboot_addr
+    struct multiboot_info *multiboot_addr
 )
 {
     clear_screen();
@@ -100,24 +101,14 @@ void kmain(
     init_keyboard();
     register_interrupt_handler(0x0E, handle_page_fault);
 
-    prints("Before");
-    Process *process = create_process();
-    switch_process(process);
-
-    prints("Switched process");
-
-
-    char *test = (char*) malloc(sizeof(char));
-    prints("Malloc");
-    itoa((uint32_t) test, buff, 16);
-    prints("Allocated virt: ");
-    prints(buff);
-    prints("\n");
-
-    *test = 16;
-    if (*test == 16)
+    if (multiboot_addr->mods_count == 1)
     {
-        prints("Malloc test worked\n");
+        prints("Calling program code\n");
+
+        call_module_t prog = (call_module_t)(uint32_t) multiboot_addr->mods_addr;
+        prog();
+
+        prints("Program returned\n");
     }
 
 

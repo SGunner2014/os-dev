@@ -7,9 +7,9 @@ extern _kernel_physical_start
 extern _kernel_end
 extern _kernel_physical_end
 
-MAGIC_NUMBER equ 0x1BADB002
-FLAGS equ 0x0
-CHECKSUM equ -MAGIC_NUMBER
+MAGIC_NUMBER    equ 0x1BADB002
+FLAGS           equ 0x00000001
+CHECKSUM        equ -(MAGIC_NUMBER + FLAGS)
 KERNEL_STACK_SIZE equ 4096    ; Size of stack in bytes
 
 section .multiboot

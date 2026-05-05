@@ -22,13 +22,16 @@ LDFLAGS = -T link.ld -melf_i386
 AS = nasm
 ASFLAGS = -f elf32
 
+programs: programs/program.o
+
 all: kernel.elf
 
 kernel.elf: $(OBJECTS)
 	$(LD) $(LDFLAGS) $(OBJECTS) -o kernel.elf
 
-os.iso: kernel.elf
+os.iso: kernel.elf programs
 	cp kernel.elf iso/boot/kernel.elf
+	cp programs/program.o iso/modules/program.o
 	xorriso -as mkisofs -R \
 				  -b boot/grub/stage2_eltorito \
 					-no-emul-boot \
