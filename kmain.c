@@ -114,5 +114,12 @@ void kmain(
     prints(buff);
     prints("\n");
 
+    *test = 16;
+    if (*test == 16)
+    {
+        prints("Malloc test worked\n");
+    }
+
+
     for (;;) ;
 }

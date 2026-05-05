@@ -3,7 +3,6 @@
 #include "../types.h"
 #include "../misc/utils.h"
 #include "process.h"
-#include "../screen.h"
 
 // static Header base;
 // static Header *freep = NULL;
@@ -17,15 +16,12 @@ static Heap kernel_heap = {
  */
 Header *kmorecore(uint32_t nunits, Heap *heap)
 {
-    prints("Got to kmorecore");
     uint32_t page_count = ((nunits * sizeof(Header)) / PAGE_SIZE) + 1;
     Header *p = (Header *) kalloc_page(page_count);
 
-    prints("ass");
     p->s.size = (page_count * PAGE_SIZE) / sizeof(Header);
     kfree((void*) (p + 1));
 
-    prints("Before return");
     return heap->freep;
 }
 
@@ -37,10 +33,7 @@ Header *morecore(uint32_t nunits, Heap *heap)
     Process *process = get_current_process();
 
     uint32_t page_count = ((nunits * sizeof(Header)) / PAGE_SIZE) + 1;
-    prints("Before allocate pages\n");
     Header *p = (Header*) allocate_pages(page_count, process);
-
-    prints("After allocate pages\n");
 
     p->s.size = (page_count * PAGE_SIZE) / sizeof(Header);
     free((void*) (p + 1));
@@ -66,23 +59,17 @@ void *_malloc(uint32_t size, Heap *heap, Header* (*alloc_fn)(uint32_t, Heap*))
 
     for (p = prevp->s.ptr; ; prevp = p, p = p->s.ptr) {
         if (p->s.size >= units) {
-            prints("1");
             if (p->s.size == units) {
                 prevp->s.ptr = p->s.ptr;
             } else {
                 p->s.size -= units;
-                prints("2");
                 p += p->s.size;
-                prints("3");
                 p->s.size = units;
-                prints("4");
             }
             heap->freep = prevp;
-            prints("5");
             return (void*)(p + 1);
         }
         if (p == heap->freep) {
-            prints("Before alloc fn\n");
             if ((p = alloc_fn(units, heap)) == NULL) {
                 return NULL;
             }
@@ -98,7 +85,6 @@ void *kmalloc(uint32_t size)
 void *malloc(uint32_t size)
 {
     Process *current_process = get_current_process();
-    prints("Got current process\n");
     return _malloc(size, &current_process->heap, morecore);
 }
 
@@ -137,9 +123,7 @@ void _free(void *ap, Heap *heap)
 
 void kfree(void *ap)
 {
-    prints("Got to kfree");
     _free(ap, &kernel_heap);
-    prints("After kfree");
 }
 
 void free(void *ap)

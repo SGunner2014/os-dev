@@ -3,7 +3,6 @@
 #define INCLUDE_MEM_H
 
 #include "../types.h"
-#include "process.h"
 
 #define PHYS_OFFSET     0xC0000000
 #define PAGE_SIZE       0x1000 // 4KB pages
@@ -26,6 +25,8 @@
 #define PAGE_ALLOC_FAIL 0xFFFFFFFF
 
 extern void load_paging_directory(uint32_t p_pde);
+
+typedef struct process Process;
 
 
 /*
@@ -74,9 +75,9 @@ void init_paging(
 
 uint32_t kalloc_page(uint32_t page_count);
 void kfree_page(uint32_t);
-
 uint32_t *create_page_directory();
-
 uint32_t allocate_pages(uint32_t page_count, Process *process);
+uint32_t kvirt_to_phys(uint32_t virt);
+char is_virt_addr_mapped(uint32_t virt_addr);
 
 #endif

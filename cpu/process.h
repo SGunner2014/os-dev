@@ -3,12 +3,13 @@
 
 #include "../types.h"
 #include "malloc.h"
+#include "mem.h"
 
 struct process {
     uint32_t pid;
     uint32_t last_virt_addr;
     uint32_t *page_directory_phys;
-    uint32_t *page_directory_virt;
+    pde_t *page_directory_virt;
     Heap heap;
 };
 

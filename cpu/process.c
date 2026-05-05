@@ -19,7 +19,7 @@ Process *create_process()
 
     uint32_t *page_directory = create_page_directory();
     process->page_directory_virt = page_directory;
-    process->page_directory_phys = (uint32_t*)((uint32_t)page_directory - PHYS_OFFSET);
+    process->page_directory_phys = (pde_t*)((uint32_t)page_directory - PHYS_OFFSET);
 
     prints("returned from create process");
 
