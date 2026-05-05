@@ -2,7 +2,6 @@
 #define INCLUDE_PROCESS_H
 
 #include "../types.h"
-#include "mem.h"
 #include "malloc.h"
 
 struct process {

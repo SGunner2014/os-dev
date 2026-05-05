@@ -2,6 +2,7 @@
 #include "../misc/utils.h"
 #include "../screen.h"
 
+
 // Kernel pde, aligned on 4kb
 // The page directory is formed of 1024 page tables (pde)
 // The page table is formed of 1024 pages (pte)
@@ -18,6 +19,24 @@ static void mark_page_as_occupied(uint32_t page)
     uint32_t offset = page % 32;
 
     framebitmap[bitmap_index] |= (0x1 << offset);
+}
+
+static char is_virt_mapped(uint32_t virt_addr)
+{
+    uint32_t pde_offset = virt_addr >> 22;
+    uint32_t pte_offset = (virt_addr >> 12) & 0x3FF;
+
+    UNUSED(pte_offset);
+
+    if (kernel_pde[pde_offset] & PTE_PRESENT)
+    {
+        if (kernel_pte[pde_offset - 768][pte_offset] & PTE_PRESENT)
+        {
+            return 1;
+        }
+    }
+
+    return 0;
 }
 
 /*
@@ -71,9 +90,15 @@ static uint32_t kmap_frames(uint32_t *frame_addrs, uint32_t frame_count)
         // Also, if the pde_offset == 0, then we need to map the pde as well
         kernel_pte[pde_offset - 768][pte_offset] = frame_addrs[i] | PTE_PRESENT | PTE_RW;
 
-        if (pte_offset == 0) {
+        if (!(kernel_pde[pde_offset] & PTE_PRESENT)) {
             uint32_t p_pt = (uint32_t) kernel_pte[pde_offset - 768] - PHYS_OFFSET;
             kernel_pde[pde_offset] = p_pt | PTE_PRESENT | PTE_RW;
+        }
+
+        uint32_t *n_addr = (uint32_t*) page_addr;
+        for (uint32_t i = 0; i < PAGE_SIZE / sizeof(uint32_t); i++)
+        {
+            n_addr[i] = 0;
         }
     }
 
@@ -91,6 +116,12 @@ uint32_t kalloc_page(uint32_t page_count)
     kalloc_frames(frames, page_count);
 
     uint32_t virt_addr = kmap_frames(frames, page_count);
+
+    prints("Mapped phys: ");
+    char buff[256];
+    itoa(frames[0], buff, 16);
+    prints(buff);
+    prints("\n");
 
     return virt_addr;
 }
@@ -116,8 +147,24 @@ void kfree_page(uint32_t address)
 
 static void paging_load_directory(pde_t *pde)
 {
+    char buff[256];
+    itoa((uint32_t) pde, buff, 16);
+    prints("Loading pd at: ");
+    prints(buff);
+    prints("\n");
+
+    char is_present = is_virt_mapped((uint32_t) pde);
+    itoa((uint32_t) is_present, buff, 2);
+    prints("Is present: ");
+    prints(buff);
+    prints("\n");
+
+    // for (;;) ;
+
     uint32_t p_pde = (uint32_t) pde - PHYS_OFFSET;
     load_paging_directory(p_pde);
+
+    // for (;;) ;
 }
 
 void init_paging(
@@ -133,7 +180,7 @@ void init_paging(
     UNUSED(kernel_end);
     UNUSED(kernel_physical_end);
 
-    framebitmap = &kernel_end;
+    framebitmap = (uint32_t*) kernel_end;
 
     // We are bootstrapped to this point using the default 1mb page map
     // We want to setup our own which covers the whole of the kernel
@@ -151,7 +198,7 @@ void init_paging(
 
         mark_page_as_occupied(i);
 
-        if (pte_offset == 0) {
+        if (!(kernel_pde[pde_offset] & PTE_PRESENT)) {
             uint32_t p_pt = (uint32_t) kernel_pte[pde_offset] - PHYS_OFFSET;
             kernel_pde[pde_offset + 768] = p_pt | PTE_PRESENT | PTE_RW;
         }
@@ -167,7 +214,10 @@ void init_paging(
  */
 uint32_t *create_page_directory()
 {
-    uint32_t *new_pd = (uint32_t*) kalloc_page(1);
+    // Allocate and map a new page on the kernel space for the page directory
+    pde_t *new_pd = (pde_t*) kalloc_page(1);
+
+    // For the new page directory, each kernel page should also be mapped
     for (uint32_t i = 768; i < 1024; i++)
     {
         new_pd[i] = kernel_pde[i];
@@ -185,27 +235,35 @@ void map_page(uint32_t *pd, uint32_t virt, uint32_t phys, uint32_t flags)
     if (!(pd[pd_index] & PTE_PRESENT)) {
         uint32_t frame = kalloc_frame();
         pd[pd_index] = frame | PTE_PRESENT | PTE_RW;
+
+        uint32_t *pt_virt = (uint32_t*) (frame + PHYS_OFFSET);
+        for (uint32_t i = 0; i < PAGE_SIZE / sizeof(uint32_t); i++)
+        {
+            pt_virt[i] = 0;
+        }
     }
 
     // Previously we had the physical address of the new frame
     // Now we need to get the virtual address so we can add our entry
     // for the page being mapped
     uint32_t *pt_addr_phys = (uint32_t*) (pd[pd_index] & ~0xFFF);
-    uint32_t *pt_addr_virt =  pt_addr_phys + PHYS_OFFSET;
+    uint32_t *pt_addr_virt =  (uint32_t*)((uint32_t) pt_addr_phys + PHYS_OFFSET);
     pt_addr_virt[pt_index] = phys | flags;
 }
 
-uint32_t map_frames(uint32_t *frames, uint32_t page_count, uint32_t last_virt_addr, uint32_t *pd)
+uint32_t map_frames(uint32_t *frames, uint32_t page_count, uint32_t* last_virt_addr, uint32_t *pd)
 {
     uint32_t start_addr = NULL;
 
     for (uint32_t i = 0; i < page_count; i++)
     {
-        last_virt_addr += 4096;
-        map_page(pd, last_virt_addr, frames[i], PTE_PRESENT | PTE_RW);
+        *last_virt_addr += 4096;
+        prints("here\n");
+        map_page(pd, *last_virt_addr, frames[i], PTE_PRESENT | PTE_RW);
+        prints("mapped page\n");
 
         if (start_addr == NULL)
-            start_addr = last_virt_addr;
+            start_addr = *last_virt_addr;
     }
 
     return start_addr;
@@ -217,7 +275,7 @@ uint32_t allocate_frame()
     return addr;
 }
 
-uint32_t allocate_pages(uint32_t page_count, uint32_t last_virt_addr, uint32_t *pd)
+uint32_t allocate_pages(uint32_t page_count, Process *process)
 {
     uint32_t frames[page_count];
     for (uint32_t i = 0; i < page_count; i++)
@@ -227,7 +285,9 @@ uint32_t allocate_pages(uint32_t page_count, uint32_t last_virt_addr, uint32_t *
 
     prints("got frames\n");
 
-    uint32_t virt_addr = map_frames(frames, page_count, last_virt_addr, pd);
+    uint32_t virt_addr = map_frames(frames, page_count, &process->last_virt_addr, process->page_directory_virt);
+
+    prints("Mapped frames\n");
 
     return virt_addr;
 }

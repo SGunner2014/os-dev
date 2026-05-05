@@ -1,6 +1,7 @@
 #include "io.h"
 #include "screen.h"
 #include "cpu/gdt.h"
+#include "cpu/process.h"
 #include "cpu/mem.h"
 #include "idt.h"
 #include "misc/utils.h"
@@ -64,6 +65,12 @@ void kmain(
         kernel_physical_end
     );
 
+    char abuff[64];
+    prints("kernel_start="); itoa(kernel_start, abuff, 16); prints(abuff); prints("\n");
+    prints("kernel_end="); itoa(kernel_end, abuff, 16); prints(abuff); prints("\n");
+    prints("kernel_physical_start="); itoa(kernel_physical_start, abuff, 16); prints(abuff); prints("\n");
+    prints("kernel_physical_end="); itoa(kernel_physical_end, abuff, 16); prints(abuff); prints("\n");
+
     struct sysinfo info = read_multiboot(multiboot_addr);
     UNUSED(multiboot_addr);
     UNUSED(info);
@@ -97,7 +104,7 @@ void kmain(
     Process *process = create_process();
     switch_process(process);
 
-    prints("Switching process");
+    prints("Switched process");
 
 
     char *test = (char*) malloc(sizeof(char));

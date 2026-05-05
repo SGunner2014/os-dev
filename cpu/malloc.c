@@ -38,7 +38,7 @@ Header *morecore(uint32_t nunits, Heap *heap)
 
     uint32_t page_count = ((nunits * sizeof(Header)) / PAGE_SIZE) + 1;
     prints("Before allocate pages\n");
-    Header *p = (Header*) allocate_pages(page_count, process->last_virt_addr, process->page_directory_virt);
+    Header *p = (Header*) allocate_pages(page_count, process);
 
     prints("After allocate pages\n");
 

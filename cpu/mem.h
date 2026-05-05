@@ -1,7 +1,9 @@
-#include "../types.h"
 
 #ifndef INCLUDE_MEM_H
 #define INCLUDE_MEM_H
+
+#include "../types.h"
+#include "process.h"
 
 #define PHYS_OFFSET     0xC0000000
 #define PAGE_SIZE       0x1000 // 4KB pages
@@ -75,6 +77,6 @@ void kfree_page(uint32_t);
 
 uint32_t *create_page_directory();
 
-uint32_t allocate_pages(uint32_t page_count, uint32_t last_virt_addr, uint32_t *pd);
+uint32_t allocate_pages(uint32_t page_count, Process *process);
 
 #endif

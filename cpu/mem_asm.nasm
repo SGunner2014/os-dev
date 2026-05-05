@@ -1,7 +1,7 @@
 global load_paging_directory
 
 ; Loads a paging directory table
-; stack: [esp + 4] -> pdx addr
+; stack: [esp + 4] -> pd addr
 ;        [esp + 0] -> return address
 load_paging_directory:
     mov eax, [esp + 4]
