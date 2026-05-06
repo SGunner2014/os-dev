@@ -42,7 +42,14 @@ void handle_page_fault(struct cpu_state *cpu)
 {
     UNUSED(cpu);
 
-    prints("Page fault\n");
+    char buff[64];
+    uint32_t cr2;
+    __asm__ volatile("mov %%cr2, %0" : "=r"(cr2));
+
+    itoa(cr2, buff, 16);
+    prints(buff);
+
+    prints("\nPage fault\n");
 
     for (;;);
 }
@@ -75,7 +82,6 @@ void kmain(
     UNUSED(info);
 
     fb_move_cursor(0);
-    prints("Hello, world!\n");
 
     // Load gdt
     gdt_init();
@@ -99,12 +105,8 @@ void kmain(
     init_keyboard();
     register_interrupt_handler(0x0E, handle_page_fault);
 
-    itoa((uint32_t) multiboot_addr, buff, 16);
-    prints("Multiboot addr: ");
-    prints(buff);
-    prints("\n");
-
     multiboot_module_t *mod = (multiboot_module_t*) (uint32_t) (multiboot_addr->mods_addr + PHYS_OFFSET);
+
     Process *process = create_process(mod->mod_start + PHYS_OFFSET, mod->mod_end - mod->mod_start + 1);
 
     prints("Created process\n");
@@ -113,17 +115,7 @@ void kmain(
 
     if (multiboot_addr->mods_count == 1)
     {
-        itoa(multiboot_addr->mods_addr, buff, 16);
-        prints("Mods addr:");
-        prints(buff);
-        prints("\n");
-
-        // prints("Calling program code\n");
-
-        // call_module_t prog = (call_module_t)(uint32_t) multiboot_addr->mods_addr;
-        // prog();
-
-        // prints("Program returned\n");
+        exec_process(process);
     }
 
 

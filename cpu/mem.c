@@ -1,6 +1,7 @@
 #include "mem.h"
 #include "../misc/utils.h"
 #include "process.h"
+#include "../screen.h"
 
 
 // Kernel pde, aligned on 4kb
@@ -141,6 +142,38 @@ static void paging_load_directory(pde_t *pde)
     load_paging_directory(p_pde);
 }
 
+/**
+ * Given the kernel physical end and a GRUB v1 multiboot structure, this
+ * computes the first page-aligned address of free space.
+ *
+ * Returns a physical address
+ */
+static uint32_t calculate_free_space_beginning(uint32_t kernel_phys_end, multiboot_info_t *multiboot)
+{
+    uint32_t addr = kernel_phys_end;
+
+    multiboot_module_t *mod;
+    uint32_t i;
+
+    // Take the end address of each module in case it's larger than the end of the kernel physical
+    for (i = 0, mod = (multiboot_module_t*) (uint32_t) (multiboot->mods_addr + PHYS_OFFSET); i < multiboot->mods_count; i++, mod++)
+    {
+        addr = mod->mod_end > addr ? mod->mod_end : addr;
+
+        uint32_t mod_end = ((uint32_t) mod) - PHYS_OFFSET;
+        mod_end = mod_end + sizeof(multiboot_module_t);
+        addr = mod_end > addr ? mod_end : addr;
+    }
+
+    uint32_t multiboot_end = (((uint32_t) multiboot) - PHYS_OFFSET) + sizeof(multiboot_info_t);
+    addr = multiboot_end > addr ? multiboot_end : addr;
+
+    // Now, make it page-aligned
+    return addr % PAGE_SIZE == 0
+        ? addr
+        : ((addr / PAGE_SIZE) + 1) * PAGE_SIZE;
+}
+
 void init_paging(
     uint32_t kernel_start,
     uint32_t kernel_physical_start,
@@ -151,15 +184,17 @@ void init_paging(
 {
     // TODO: map precise area of kernel memory, not just the whole 1GB
     UNUSED(kernel_start);
+    UNUSED(kernel_end);
     UNUSED(kernel_physical_start);
-    UNUSED(multiboot);
-
-    framebitmap = (uint32_t*) kernel_end;
+    // UNUSED(multiboot);
+    //
+    uint32_t phys_end = calculate_free_space_beginning(kernel_physical_end, multiboot);
+    framebitmap = (uint32_t*) (phys_end + PHYS_OFFSET);
 
     // We are bootstrapped to this point using the default 1mb page map
     // We want to setup our own which covers the whole of the kernel
     // First: We want to calculate the number of pages we need to map the kernel
-    uint32_t p_count = kernel_physical_end / PAGE_SIZE + 1;
+    uint32_t p_count = phys_end / PAGE_SIZE + 2;
 
     for (uint32_t i = 0; i < p_count; i++)
     {
@@ -170,8 +205,6 @@ void init_paging(
         uint32_t p_addr = i * PAGE_SIZE;
         kernel_pte[pde_offset][pte_offset] = p_addr | PTE_PRESENT | PTE_RW;
 
-        mark_frame_as_occupied(i);
-
         if (!(kernel_pde[pde_offset] & PTE_PRESENT)) {
             uint32_t p_pt = (uint32_t) kernel_pte[pde_offset] - PHYS_OFFSET;
             kernel_pde[pde_offset + 768] = p_pt | PTE_PRESENT | PTE_RW;
@@ -181,6 +214,12 @@ void init_paging(
     }
 
     paging_load_directory(kernel_pde);
+
+    // Now, we can go back and mark the pages as occupied
+    for (uint32_t i = 0; i < p_count; i++)
+    {
+        mark_frame_as_occupied(i);
+    }
 }
 
 /**
@@ -318,7 +357,7 @@ uint32_t allocate_pages(uint32_t page_count, Process *process)
 
 void copy_mem(uint32_t *from, uint32_t *to, uint32_t size)
 {
-    for (uint32_t i = 0; i < size; i++)
+    for (uint32_t i = 0; i < size / sizeof(uint32_t); i++)
     {
         to[i] = from[i];
     }
