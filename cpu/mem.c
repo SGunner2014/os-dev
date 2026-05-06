@@ -145,12 +145,14 @@ void init_paging(
     uint32_t kernel_start,
     uint32_t kernel_physical_start,
     uint32_t kernel_end,
-    uint32_t kernel_physical_end
+    uint32_t kernel_physical_end,
+    multiboot_info_t *multiboot
 )
 {
     // TODO: map precise area of kernel memory, not just the whole 1GB
     UNUSED(kernel_start);
     UNUSED(kernel_physical_start);
+    UNUSED(multiboot);
 
     framebitmap = (uint32_t*) kernel_end;
 
@@ -312,4 +314,12 @@ uint32_t allocate_pages(uint32_t page_count, Process *process)
     );
 
     return virt_addr;
+}
+
+void copy_mem(uint32_t *from, uint32_t *to, uint32_t size)
+{
+    for (uint32_t i = 0; i < size; i++)
+    {
+        to[i] = from[i];
+    }
 }

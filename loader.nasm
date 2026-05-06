@@ -66,6 +66,7 @@ higher_half:
 
     mov esp, kernel_stack + KERNEL_STACK_SIZE
 
+    add ebx, 0xC0000000 ; Add kernel physical offset to multiboot addr so it's pre-mapped
     push ebx
     push _kernel_start
     push _kernel_physical_start

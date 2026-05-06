@@ -28,6 +28,8 @@ void gdt_init()
     set_entry(0, 0, 0, 0, 0);
     set_entry(1, 0xffffffff, 0x0, 0x9a, 0xcf); // code segment for kernel
     set_entry(2, 0xffffffff, 0x0, 0x92, 0xcf); // data segment for kernel
+    // set_entry(3, 0xffffffff, 0x0, 0xFE, 0xcf); // code segment for user
+    // set_entry(4, 0xffffffff, 0x0, 0xF2, 0xcf); // data segment for user
 
     load_gdt(&gp);
 }

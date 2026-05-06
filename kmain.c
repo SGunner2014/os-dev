@@ -1,15 +1,12 @@
-#include "kmain.h"
-
+#include "cpu/process.h"
 #include "io.h"
 #include "screen.h"
 #include "cpu/gdt.h"
-#include "cpu/process.h"
 #include "cpu/mem.h"
 #include "idt.h"
 #include "misc/utils.h"
 #include "cpu/multiboot.h"
 #include "drivers/keyboard.h"
-#include "cpu/process.h"
 
 #define FB_GREEN 2
 #define FB_DARK_GREY 8
@@ -55,7 +52,7 @@ void kmain(
     unsigned int kernel_end,
     unsigned int kernel_physical_start,
     unsigned int kernel_start,
-    struct multiboot_info *multiboot_addr
+    multiboot_info_t *multiboot_addr
 )
 {
     clear_screen();
@@ -63,7 +60,8 @@ void kmain(
         kernel_start,
         kernel_physical_start,
         kernel_end,
-        kernel_physical_end
+        kernel_physical_end,
+        multiboot_addr
     );
 
     char abuff[64];
@@ -101,14 +99,31 @@ void kmain(
     init_keyboard();
     register_interrupt_handler(0x0E, handle_page_fault);
 
+    itoa((uint32_t) multiboot_addr, buff, 16);
+    prints("Multiboot addr: ");
+    prints(buff);
+    prints("\n");
+
+    multiboot_module_t *mod = (multiboot_module_t*) (uint32_t) (multiboot_addr->mods_addr + PHYS_OFFSET);
+    Process *process = create_process(mod->mod_start + PHYS_OFFSET, mod->mod_end - mod->mod_start + 1);
+
+    prints("Created process\n");
+
+    UNUSED(process);
+
     if (multiboot_addr->mods_count == 1)
     {
-        prints("Calling program code\n");
+        itoa(multiboot_addr->mods_addr, buff, 16);
+        prints("Mods addr:");
+        prints(buff);
+        prints("\n");
 
-        call_module_t prog = (call_module_t)(uint32_t) multiboot_addr->mods_addr;
-        prog();
+        // prints("Calling program code\n");
 
-        prints("Program returned\n");
+        // call_module_t prog = (call_module_t)(uint32_t) multiboot_addr->mods_addr;
+        // prog();
+
+        // prints("Program returned\n");
     }
 
 
