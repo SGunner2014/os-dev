@@ -1,7 +1,6 @@
 #include "mem.h"
 #include "../misc/utils.h"
 #include "process.h"
-#include "../screen.h"
 
 
 // Kernel pde, aligned on 4kb

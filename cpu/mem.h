@@ -29,39 +29,7 @@ extern void load_paging_directory(uint32_t p_pde);
 
 typedef struct process Process;
 
-
-/*
- * flags:
- * -- flags --
- * 0 -> Present
- * 1 -> read/write
- * 2 -> user/supervisor (1 = all, 0 = supervisor)
- * 3 -> PWT (write-through)
- * 4 -> PCD (cache disable)
- * 5 -> Accessed (has this page been read?)
- * 6 -> Dirty (has this page been written to?)
- * 7 -> PAT
- * -- flags_end --
- * 8 -> Global (1 = cpu not invalidate upon mov to cr3 instr.) relies on cr4[7] = 1
- * 9 .. 11 -> AVL (Ignored by cpu)
- * 12 .. 15 -> address low
- * -- address high --
- * 16 .. 31 -> address high
- */
 typedef uint32_t pte_t;
-
-/*
- * 0 -> Present
- * 1 -> read/write
- * 2 -> user/supervisor (1 = all, 0 = supervisor)
- * 3 -> PWT (write-through)
- * 4 -> PCD (cache disable)
- * 5 -> Accessed (has this page been read?)
- * 6 -> AVL
- * 7 -> Page Size
- * 8 .. 11 -> AVL
- * 12 .. 31 -> Address
- */
 typedef uint32_t pde_t;
 
 /*
@@ -77,9 +45,10 @@ void init_paging(
 
 uint32_t kalloc_page(uint32_t page_count);
 void kfree_page(uint32_t);
+uint32_t kvirt_to_phys(uint32_t virt);
+
 uint32_t *create_page_directory();
 uint32_t allocate_pages(uint32_t page_count, Process *process);
-uint32_t kvirt_to_phys(uint32_t virt);
 char is_virt_addr_mapped(uint32_t virt_addr);
 void copy_mem(uint32_t *from, uint32_t *to, uint32_t size);
 

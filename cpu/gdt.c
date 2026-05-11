@@ -1,6 +1,6 @@
 #include "gdt.h"
 
-static struct gdt_entry gdt[3];
+static struct gdt_entry gdt[256];
 static struct gdt_ptr gp;
 
 static void set_entry(
@@ -22,14 +22,14 @@ static void set_entry(
 
 void gdt_init()
 {
-    gp.size = (sizeof(struct gdt_entry) * 3) - 1;
+    gp.size = (sizeof(struct gdt_entry) * 5) - 1;
     gp.address = (unsigned int) &gdt;
 
     set_entry(0, 0, 0, 0, 0);
     set_entry(1, 0xffffffff, 0x0, 0x9a, 0xcf); // code segment for kernel
     set_entry(2, 0xffffffff, 0x0, 0x92, 0xcf); // data segment for kernel
-    // set_entry(3, 0xffffffff, 0x0, 0xFE, 0xcf); // code segment for user
-    // set_entry(4, 0xffffffff, 0x0, 0xF2, 0xcf); // data segment for user
+    set_entry(3, 0xffffffff, 0x0, 0xFE, 0xcf); // code segment for user
+    set_entry(4, 0xffffffff, 0x0, 0xF2, 0xcf); // data segment for user
 
     load_gdt(&gp);
 }
