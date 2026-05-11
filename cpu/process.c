@@ -41,5 +41,11 @@ void switch_context(Process *process)
 
 void exec_process(Process *process)
 {
-    process->prog();
+    uint32_t eflags = 1;
+
+    jump_user(
+        (uint32_t) process->prog,
+        (uint32_t) process->stack,
+        eflags
+    );
 }
