@@ -6,19 +6,21 @@ global jump_user
 ;        [esp +  4] -> eip (instruction pointer)
 ;        [esp +  0] -> return addr
 jump_user:
+    ; set up stack as iret expects
+    mov ebx, [esp + 4]  ; eip
+    mov ecx, [esp + 8]  ; esp
+    mov edx, [esp + 12] ; eflags
+
     mov ax, (4 * 8) | 3
     mov ds, ax
     mov es, ax
     mov fs, ax
-    mov gs, ax
+    mov gs, ax ; ss hanbdled by iret
 
-    ; set up stack as iret expects
-    mov eax, [esp + 4]  ; eip
-    mov ebx, [esp + 8]  ; ss
-    mov ecx, [esp + 12] ; eflags
+
     push (4 * 8) | 3    ; data selector
-    push ebx
-    push ecx
+    push ecx ; esp
+    push edx ; eflags
     push (3 * 8) | 3
-    push eax
+    push ebx
     iret

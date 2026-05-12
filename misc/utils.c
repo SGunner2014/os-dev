@@ -107,3 +107,12 @@ void format_memory_str(uint32_t kb, char *buff)
     buff_cpy += buff2len;
     strcpy(buff_cpy, "KB\0");
 }
+
+void memset(void *addr, uint32_t value, uint32_t size)
+{
+    uint8_t *ptr = (uint8_t*) addr;
+    for (uint32_t i = 0; i < size; i++)
+    {
+        ptr[i] = value;
+    }
+}

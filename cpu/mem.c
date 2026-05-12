@@ -86,11 +86,11 @@ static uint32_t kmap_frames(uint32_t *frame_addrs, uint32_t frame_count)
 
         // Map the page in the pte
         // Also, if the pde_offset == 0, then we need to map the pde as well
-        kernel_pte[pde_offset - 768][pte_offset] = frame_addrs[i] | PTE_PRESENT | PTE_RW;
+        kernel_pte[pde_offset - 768][pte_offset] = frame_addrs[i] | PTE_PRESENT | PTE_RW | PTE_USER;
 
         if (!(kernel_pde[pde_offset] & PTE_PRESENT)) {
             uint32_t p_pt = (uint32_t) kernel_pte[pde_offset - 768] - PHYS_OFFSET;
-            kernel_pde[pde_offset] = p_pt | PTE_PRESENT | PTE_RW;
+            kernel_pde[pde_offset] = p_pt | PTE_PRESENT | PTE_RW | PTE_USER;
         }
 
         uint32_t *n_addr = (uint32_t*) page_addr;
@@ -202,11 +202,11 @@ void init_paging(
 
         // phys addr = directory * 1024 + page * PAGE_SIZE bytes
         uint32_t p_addr = i * PAGE_SIZE;
-        kernel_pte[pde_offset][pte_offset] = p_addr | PTE_PRESENT | PTE_RW;
+        kernel_pte[pde_offset][pte_offset] = p_addr | PTE_PRESENT | PTE_RW | PTE_USER;
 
         if (!(kernel_pde[pde_offset] & PTE_PRESENT)) {
             uint32_t p_pt = (uint32_t) kernel_pte[pde_offset] - PHYS_OFFSET;
-            kernel_pde[pde_offset + 768] = p_pt | PTE_PRESENT | PTE_RW;
+            kernel_pde[pde_offset + 768] = p_pt | PTE_PRESENT | PTE_RW | PTE_USER;
         }
 
         last_page_addr = (PHYS_OFFSET) + (i * PAGE_SIZE);
@@ -268,7 +268,7 @@ void map_page(pde_t *pd, uint32_t virt, uint32_t phys, uint32_t flags)
         // Translate the virtual address given to use by the kernel
         // then set the directory entry to the (phys) addr of the new frame
         uint32_t phys_page = kvirt_to_phys(page);
-        pd[pde_offset] = phys_page | PTE_PRESENT | PTE_RW;
+        pd[pde_offset] = phys_page | PTE_PRESENT | PTE_RW | PTE_USER;
 
         pt_virt = (pte_t*) page;
 
@@ -298,7 +298,7 @@ uint32_t map_frames(uint32_t *frames, uint32_t page_count, uint32_t* last_virt_a
     for (uint32_t i = 0; i < page_count; i++)
     {
         *last_virt_addr += 4096;
-        map_page(pd, *last_virt_addr, frames[i], PTE_PRESENT | PTE_RW);
+        map_page(pd, *last_virt_addr, frames[i], PTE_PRESENT | PTE_RW | PTE_USER);
 
         if (start_addr == NULL)
             start_addr = *last_virt_addr;
@@ -356,8 +356,19 @@ uint32_t allocate_pages(uint32_t page_count, Process *process)
 
 void copy_mem(uint32_t *from, uint32_t *to, uint32_t size)
 {
-    for (uint32_t i = 0; i < size / sizeof(uint32_t); i++)
+    uint8_t *cto = (uint8_t*) to;
+    uint8_t *cfrom = (uint8_t*) from;
+
+    for (uint32_t i = 0; i < size; i++)
     {
-        to[i] = from[i];
+        cto[i] = cfrom[i];
+    }
+}
+
+void copy_kernel_mappings(Process *process)
+{
+    for (uint32_t i = 768; i < 1024; i++)
+    {
+        process->page_directory_virt[i] = kernel_pde[i];
     }
 }

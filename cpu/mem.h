@@ -51,5 +51,6 @@ uint32_t *create_page_directory();
 uint32_t allocate_pages(uint32_t page_count, Process *process);
 char is_virt_addr_mapped(uint32_t virt_addr);
 void copy_mem(uint32_t *from, uint32_t *to, uint32_t size);
+void copy_kernel_mappings(Process *process);
 
 #endif

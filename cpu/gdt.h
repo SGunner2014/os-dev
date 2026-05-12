@@ -1,6 +1,8 @@
 #ifndef INCLUDE_GDT_H
 #define INCLUDE_GDT_H
 
+#include "../types.h"
+
 struct gdt_ptr {
     unsigned short size;
     unsigned int address;
@@ -23,6 +25,8 @@ struct gdt_entry {
 } __attribute__((packed));
 
 void load_gdt(struct gdt_ptr* table);
+void load_ltr(uint32_t selector);
 void gdt_init();
+void set_tss_stack_pointer(uint32_t *esp0);
 
 #endif

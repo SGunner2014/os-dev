@@ -1,5 +1,6 @@
 #include "gdt.h"
 #include "process.h"
+#include "../misc/utils.h"
 
 static struct gdt_entry gdt[6];
 static struct gdt_ptr gp;
@@ -30,18 +31,16 @@ void create_tss_gdt(uint32_t i)
     uint8_t access = 0x89; // 1000 1001
     uint8_t gran = 0;
 
-    uint32_t *tss = (uint32_t*) &tss_entry;
+    memset(&tss_entry, 0, sizeof(tss_entry));
 
-    for (uint32_t j = 0; j < sizeof(tss_entry); j++) {
-        tss[j] = 0;
-    }
+    tss_entry.ss0 = 0x10; // kernel data segment
 
     set_entry(i, limit, base, access, gran);
 }
 
 void gdt_init()
 {
-    gp.size = (sizeof(struct gdt_entry) * 5) - 1;
+    gp.size = (sizeof(struct gdt_entry) * 6) - 1;
     gp.address = (unsigned int) &gdt;
 
     set_entry(0, 0, 0, 0, 0);
@@ -53,4 +52,10 @@ void gdt_init()
     create_tss_gdt(5);
 
     load_gdt(&gp);
+    load_ltr(0x28); // Load tss (index 5, gdt, rpl 0)
+}
+
+void set_tss_stack_pointer(uint32_t *esp0)
+{
+    tss_entry.esp0 = (uint32_t) esp0;
 }

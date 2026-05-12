@@ -87,3 +87,11 @@ static void scroll_screen()
         fb[((VGA_HEIGHT - 1) * VGA_WIDTH * 2) + (i * 2 + 1)] = 0x0;
     }
 }
+
+void printui(uint32_t i, uint32_t base)
+{
+    char buff[16];
+
+    itoa(i, buff, base);
+    prints(buff);
+}

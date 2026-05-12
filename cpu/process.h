@@ -5,12 +5,16 @@
 #include "malloc.h"
 #include "mem.h"
 
+#define CPU_CARRY_FLAG      (1u << 0)
+#define CPU_IF_FLAG         (1u << 9)
+
 typedef void (*call_module_t)(void);
 struct process {
     uint32_t pid;
     uint32_t last_virt_addr;
     uint32_t *page_directory_phys;
     uint32_t *stack;
+    uint32_t *kernel_stack;
     pde_t *page_directory_virt;
     Heap heap;
     uint32_t exec_size;
@@ -22,7 +26,7 @@ typedef struct process Process;
 struct tss_entry {
     uint32_t prev_tss;      // Location of previous tss
     uint32_t esp0;          // Stack pointer to load when changing to kernel mode
-    uint32_t ss0;           // stack segment to load when changing to kernel mode
+    uint32_t ss0;           // Stack segment to load when changing to kernel mode
     // Everything below here is unused.
 	uint32_t esp1;
 	uint32_t ss1;

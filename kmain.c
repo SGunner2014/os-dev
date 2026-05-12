@@ -46,10 +46,18 @@ void handle_page_fault(struct cpu_state *cpu)
     uint32_t cr2;
     __asm__ volatile("mov %%cr2, %0" : "=r"(cr2));
 
-    itoa(cr2, buff, 16);
-    prints(buff);
+    prints("\n-- Page fault --\n");
 
-    prints("\nPage fault\n");
+    itoa(cr2, buff, 16);
+    prints("Address: ");
+    prints(buff);
+    prints("\n");
+
+    // Process *process = get_current_process();
+
+    // itoa((uint32_t) process->prog, buff, 16);
+    // prints(buff);
+
 
     for (;;);
 }
@@ -115,6 +123,7 @@ void kmain(
 
     if (multiboot_addr->mods_count == 1)
     {
+        switch_context(process);
         exec_process(process);
     }
 

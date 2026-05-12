@@ -1,7 +1,9 @@
 #include "process.h"
 #include "mem.h"
 #include "malloc.h"
+#include "gdt.h"
 #include "../misc/utils.h"
+#include "../screen.h"
 
 static uint32_t last_pid = 0;
 static Process *current_process = NULL;
@@ -23,7 +25,11 @@ Process *create_process(uint32_t addr, uint32_t size)
     uint32_t *page_directory = create_page_directory();
     process->page_directory_virt = page_directory;
     process->page_directory_phys = (pde_t*)((uint32_t)page_directory - PHYS_OFFSET);
+
     process->stack = kmalloc(PAGE_SIZE);
+    process->kernel_stack = kmalloc(PAGE_SIZE);
+
+    copy_kernel_mappings(process);
 
     return process;
 }
@@ -39,13 +45,38 @@ void switch_context(Process *process)
     load_paging_directory((uint32_t) process->page_directory_phys);
 }
 
+static uint32_t *stack_frame_to_stack_pointer(uint32_t *stack)
+{
+    return (uint32_t*) (((uint8_t*)stack) + PAGE_SIZE) - 1;
+}
+
 void exec_process(Process *process)
 {
-    uint32_t eflags = 1;
+    uint32_t eflags = 0;
 
+    // Set the tss entry quickly so we know which process we're dealing
+    // with in the future
+    set_tss_stack_pointer(stack_frame_to_stack_pointer(process->kernel_stack));
+
+    prints("jumping to user\n");
+
+    // Debug process->prog, stack, kernel stack
+    prints("kernel stack: ");
+    printui((uint32_t) process->kernel_stack, 16);
+    prints(" process prog: ");
+    printui((uint32_t) process->prog, 16);
+    prints(" process stack: ");
+    printui((uint32_t) process->stack, 16);
+    prints(" eflags: ");
+    printui((uint32_t) eflags, 16);
+    prints("\n");
+
+    // Jump to user space
     jump_user(
         (uint32_t) process->prog,
-        (uint32_t) process->stack,
+        (uint32_t) stack_frame_to_stack_pointer(process->stack),
         eflags
     );
+
+    for (;;) ;
 }
