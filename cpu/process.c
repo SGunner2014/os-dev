@@ -52,7 +52,7 @@ static uint32_t *stack_frame_to_stack_pointer(uint32_t *stack)
 
 void exec_process(Process *process)
 {
-    uint32_t eflags = 0;
+    uint32_t eflags = CPU_IF_FLAG;
 
     // Set the tss entry quickly so we know which process we're dealing
     // with in the future
