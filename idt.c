@@ -1,6 +1,5 @@
 #include "idt.h"
 #include "io.h"
-#include "screen.h"
 
 static struct idt_entry idt[256];
 static struct idt_ptr idt_p;
@@ -98,14 +97,14 @@ void pic_init()
     outb(PIC2_PORT_DATA, PIC2_START_INT);
 
     // tell pics about each other
-    outb(PIC1_PORT_DATA, 0x04); // master - salve is on irq2
+    outb(PIC1_PORT_DATA, 0x04); // master - slave is on irq2
     outb(PIC2_PORT_DATA, 0x02); // slave - confirm identity is 2
 
     // set 8086 mode
     outb(PIC1_PORT_DATA, ICW4_8086);
     outb(PIC2_PORT_DATA, ICW4_8086);
 
-    // mask ann interrupts for now - should unmask as we implement handlers
+    // mask all interrupts for now - should unmask as we implement handlers
     outb(PIC1_PORT_DATA, 0xfd);
     outb(PIC2_PORT_DATA, 0xff);
 }

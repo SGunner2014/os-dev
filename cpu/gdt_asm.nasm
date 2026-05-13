@@ -17,13 +17,13 @@ load_gdt:
     ; Set code segment register - perform a far jump
     jmp 0x08:flush_cs
 
+flush_cs:
+    ret
+
 ; loads tss
 ; stack: [esp + 4] -> tss selector
 ;        [esp + 0] -> return address
 load_ltr:
     mov eax, [esp + 4]
     ltr ax
-    ret
-
-flush_cs:
     ret
