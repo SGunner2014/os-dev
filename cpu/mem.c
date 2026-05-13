@@ -181,12 +181,10 @@ void init_paging(
     multiboot_info_t *multiboot
 )
 {
-    // TODO: map precise area of kernel memory, not just the whole 1GB
     UNUSED(kernel_start);
     UNUSED(kernel_end);
     UNUSED(kernel_physical_start);
-    // UNUSED(multiboot);
-    //
+
     uint32_t phys_end = calculate_free_space_beginning(kernel_physical_end, multiboot);
     framebitmap = (uint32_t*) (phys_end + PHYS_OFFSET);
 

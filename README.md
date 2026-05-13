@@ -15,8 +15,8 @@ Currently, we have a base upon which to build - the following have been implemen
 
 ## Task list:
 
-[] Refactor memory management so it's more readable
-[] Produce documentation describing the overall architecture
-[] Implement system to share common kernel functionality with processes (e.g. libraries)
-[] Port mlibc
-[] Implement basic shell
+- [ ] Refactor memory management so it's more readable
+- [ ] Produce documentation describing the overall architecture
+- [ ] Implement system to share common kernel functionality with processes (e.g. libraries)
+- [ ] Port mlibc
+- [ ] Implement basic shell
