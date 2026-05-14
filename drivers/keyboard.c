@@ -1,6 +1,7 @@
 #include "keyboard.h"
 #include "../io.h"
 #include "../misc/utils.h"
+#include "../screen.h"
 
 #define KEYMAP_LENGTH 0x53
 
@@ -78,6 +79,8 @@ static void handle_keyboard_interrupt(struct cpu_state *cpu)
             chr = lowercase[scancode];
         }
     }
+
+    printc(chr);
 
     UNUSED(chr);
 }

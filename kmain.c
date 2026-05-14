@@ -62,6 +62,12 @@ void handle_page_fault(struct cpu_state *cpu)
     for (;;);
 }
 
+void handle_syscall(struct cpu_state *cpu)
+{
+    UNUSED(cpu);
+    prints("syscall\n");
+}
+
 void kmain(
     unsigned int kernel_physical_end,
     unsigned int kernel_end,
@@ -112,6 +118,9 @@ void kmain(
 
     init_keyboard();
     register_interrupt_handler(0x0E, handle_page_fault);
+    register_interrupt_handler(0x80, handle_syscall);
+
+    __asm__("int $0x80");
 
     multiboot_module_t *mod = (multiboot_module_t*) (uint32_t) (multiboot_addr->mods_addr + PHYS_OFFSET);
 
@@ -124,6 +133,8 @@ void kmain(
     if (multiboot_addr->mods_count == 1)
     {
         switch_context(process);
+
+        prints("Exec process\n");
         exec_process(process);
     }
 

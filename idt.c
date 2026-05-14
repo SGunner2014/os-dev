@@ -35,7 +35,7 @@ interrupt_handler handlers[256];
 
 /**
  * Sets an entry within the idt table.
- */
+*/
 static void set_entry(
     int i, void *isr, unsigned short segment_selector,
     unsigned char type_attributes
@@ -60,6 +60,8 @@ void idt_init()
         set_entry(i, isr_stub_table[i], 0x08, 0x8E);
     }
 
+    set_entry(0x80, isr_stub_table[48], 0x08, 0xEE);
+
     pic_init();
     load_idt(&idt_p);
 }
@@ -69,6 +71,7 @@ void handle_interrupt(struct cpu_state *cpu)
     struct stack_state *stack = (struct stack_state *)((unsigned char *)cpu + sizeof(struct cpu_state));
 
     int int_num = stack->int_num;
+
     if (handlers[int_num] != 0) {
         interrupt_handler handler = handlers[int_num];
         handler(cpu);

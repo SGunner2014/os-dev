@@ -108,6 +108,9 @@ no_error_code_interrupt_handler 45   ; IRQ13 - coprocessor
 no_error_code_interrupt_handler 46   ; IRQ14 - IDE bus
 no_error_code_interrupt_handler 47   ; IRQ15 - IDE bus
 
+; syscall
+no_error_code_interrupt_handler 128  ; syscall
+
 isr_stub_table:
     dd interrupt_handler_0
     dd interrupt_handler_1
@@ -157,3 +160,4 @@ isr_stub_table:
     dd interrupt_handler_45
     dd interrupt_handler_46
     dd interrupt_handler_47
+    dd interrupt_handler_128
