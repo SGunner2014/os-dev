@@ -1,5 +1,6 @@
 #include "screen.h"
 #include "misc/utils.h"
+#include "drivers/vga.h"
 
 #define BLACK 0x0
 #define WHITE 0xf
@@ -46,21 +47,23 @@ void printc(char chr)
 void prints(char *buff)
 {
     unsigned int len = strlen(buff);
-    // unsigned int len = 3;
+    // // unsigned int len = 3;
 
-    for (unsigned int i = 0; i < len; i++)
-    {
-        printc(buff[i]);
-    }
+    // for (unsigned int i = 0; i < len; i++)
+    // {
+    //     printc(buff[i]);
+    // }
+    //
+    write(buff, len);
 }
 
 void clear_screen()
 {
-    for (unsigned int i = 0; i < MAX_POS + 1; i++)
-    {
-        fb[i * 2] = ' ';
-        fb[i * 2 + 1] = WHITE_ON_BLACK;
-    }
+    // for (unsigned int i = 0; i < MAX_POS + 1; i++)
+    // {
+    //     fb[i * 2] = ' ';
+    //     fb[i * 2 + 1] = WHITE_ON_BLACK;
+    // }
 }
 
 /**

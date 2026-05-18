@@ -1,6 +1,6 @@
 PLATFORM = $(shell uname)
 
-OBJECTS = loader.o kmain.o io.o screen.o cpu/gdt_asm.o cpu/gdt.o idt.o idt_asm.o misc/utils.o drivers/keyboard.o cpu/mem.o cpu/mem_asm.o cpu/multiboot.o cpu/malloc.o cpu/process.o cpu/user_mode.o
+OBJECTS = loader.o kmain.o io.o screen.o cpu/gdt_asm.o cpu/gdt.o idt.o idt_asm.o misc/utils.o drivers/keyboard.o cpu/mem.o cpu/mem_asm.o cpu/multiboot.o cpu/malloc.o cpu/process.o cpu/user_mode.o drivers/vga.o
 # CC = x86_64-elf-gcc
 
 ifeq ($(PLATFORM), Darwin)
@@ -27,6 +27,9 @@ programs/program.bin:
 
 all: kernel.elf
 
+disk.img:
+	qemu-img create disk.img 512M
+
 kernel.elf: $(OBJECTS)
 	$(LD) $(LDFLAGS) $(OBJECTS) -o kernel.elf
 
@@ -45,8 +48,8 @@ os.iso: kernel.elf programs/program.bin
 					-o os.iso \
 					iso
 
-run: os.iso
-	qemu-system-i386 -cdrom os.iso -m 2048 -serial stdio -d int,cpu_reset -no-reboot
+run: os.iso disk.img
+	qemu-system-i386 -cdrom os.iso -m 2048 -serial stdio -d int,cpu_reset -no-reboot -device ahci,id=ahci -drive file=disk.img,id=disk,if=none,format=raw -device ide-hd,drive=disk,bus=ahci.0
 
 %.o: %.c
 	$(CC) $(CFLAGS) $< -o $@
@@ -58,3 +61,4 @@ clean:
 	find . -name "*.o" -delete
 	find . -name "*.bin" -delete
 	rm -f kernel.elf os.iso
+	rm -f disk.img
