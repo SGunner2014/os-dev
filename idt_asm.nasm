@@ -30,25 +30,25 @@ interrupt_handler_%1:
 ; Common interrupt handler:
 common_interrupt_handler:
     ; save registers
-    push eax
-    push ebx
-    push ecx
-    push edx
-    push esi
-    push edi
     push ebp
+    push edi
+    push esi
+    push edx
+    push ecx
+    push ebx
+    push eax
 
     push esp
     call handle_interrupt
     add esp, 4
 
-    pop ebp
-    pop edi
-    pop esi
-    pop edx
-    pop ecx
-    pop ebx
     pop eax
+    pop ebx
+    pop ecx
+    pop edx
+    pop esi
+    pop edi
+    pop ebp
 
     ; restore esp (we skip the interrupt num and err code)
     add esp, 8

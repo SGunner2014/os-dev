@@ -1,6 +1,5 @@
 #include "cpu/process.h"
 #include "io.h"
-#include "screen.h"
 #include "cpu/gdt.h"
 #include "cpu/mem.h"
 #include "idt.h"
@@ -8,6 +7,7 @@
 #include "cpu/multiboot.h"
 #include "drivers/keyboard.h"
 #include "drivers/vga.h"
+#include "cpu/syscall.h"
 
 #define FB_GREEN 2
 #define FB_DARK_GREY 8
@@ -47,26 +47,20 @@ void handle_page_fault(struct cpu_state *cpu)
     uint32_t cr2;
     __asm__ volatile("mov %%cr2, %0" : "=r"(cr2));
 
-    prints("\n-- Page fault --\n");
+    print("\n-- Page fault --\n");
 
     itoa(cr2, buff, 16);
-    prints("Address: ");
-    prints(buff);
-    prints("\n");
+    print("Address: ");
+    print(buff);
+    print("\n");
 
     // Process *process = get_current_process();
 
     // itoa((uint32_t) process->prog, buff, 16);
-    // prints(buff);
+    // print(buff);
 
 
     for (;;);
-}
-
-void handle_syscall(struct cpu_state *cpu)
-{
-    UNUSED(cpu);
-    prints("syscall\n");
 }
 
 void kmain(
@@ -88,61 +82,59 @@ void kmain(
 
     write("Hello", 5);
 
+    char abuff[64];
+    print("kernel_start="); itoa(kernel_start, abuff, 16); print(abuff); print("\n");
+    print("kernel_end="); itoa(kernel_end, abuff, 16); print(abuff); print("\n");
+    print("kernel_physical_start="); itoa(kernel_physical_start, abuff, 16); print(abuff); print("\n");
+    print("kernel_physical_end="); itoa(kernel_physical_end, abuff, 16); print(abuff); print("\n");
+
+    struct sysinfo info = read_multiboot(multiboot_addr);
+    UNUSED(multiboot_addr);
+    UNUSED(info);
+
+    fb_move_cursor(0);
+
+    // Load gdt
+    gdt_init();
+    print("Set GDT\n");
+    // Load interrupts
+    idt_init();
+    print("Set IDT\n");
+
+    print("Multiboot structure was at: 0x");
+    char buff[64];
+    itoa(info.struct_addr, buff, 16);
+    print(buff);
+    print("\n");
+
+    print("Boot complete, total memory detected: ");
+    char memstr[256];
+    format_memory_str(info.total_memory, memstr);
+    print(memstr);
+    print("\n");
+
+    init_keyboard();
+    register_interrupt_handler(0x0E, handle_page_fault);
+    init_syscalls();
+
+    __asm__("int $0x80");
+
+    multiboot_module_t *mod = (multiboot_module_t*) (uint32_t) (multiboot_addr->mods_addr + PHYS_OFFSET);
+
+    Process *process = create_process(mod->mod_start + PHYS_OFFSET, mod->mod_end - mod->mod_start + 1);
+
+    print("Created process\n");
+
+    UNUSED(process);
+
+    if (multiboot_addr->mods_count == 1)
+    {
+        switch_context(process);
+
+        print("Exec process\n");
+        exec_process(process);
+    }
+
+
     for (;;) ;
-
-    // char abuff[64];
-    // prints("kernel_start="); itoa(kernel_start, abuff, 16); prints(abuff); prints("\n");
-    // prints("kernel_end="); itoa(kernel_end, abuff, 16); prints(abuff); prints("\n");
-    // prints("kernel_physical_start="); itoa(kernel_physical_start, abuff, 16); prints(abuff); prints("\n");
-    // prints("kernel_physical_end="); itoa(kernel_physical_end, abuff, 16); prints(abuff); prints("\n");
-
-    // struct sysinfo info = read_multiboot(multiboot_addr);
-    // UNUSED(multiboot_addr);
-    // UNUSED(info);
-
-    // fb_move_cursor(0);
-
-    // // Load gdt
-    // gdt_init();
-    // prints("Set GDT\n");
-    // // Load interrupts
-    // idt_init();
-    // prints("Set IDT\n");
-
-    // prints("Multiboot structure was at: 0x");
-    // char buff[64];
-    // itoa(info.struct_addr, buff, 16);
-    // prints(buff);
-    // prints("\n");
-
-    // prints("Boot complete, total memory detected: ");
-    // char memstr[256];
-    // format_memory_str(info.total_memory, memstr);
-    // prints(memstr);
-    // prints("\n");
-
-    // init_keyboard();
-    // register_interrupt_handler(0x0E, handle_page_fault);
-    // register_interrupt_handler(0x80, handle_syscall);
-
-    // __asm__("int $0x80");
-
-    // multiboot_module_t *mod = (multiboot_module_t*) (uint32_t) (multiboot_addr->mods_addr + PHYS_OFFSET);
-
-    // Process *process = create_process(mod->mod_start + PHYS_OFFSET, mod->mod_end - mod->mod_start + 1);
-
-    // prints("Created process\n");
-
-    // UNUSED(process);
-
-    // if (multiboot_addr->mods_count == 1)
-    // {
-    //     switch_context(process);
-
-    //     prints("Exec process\n");
-    //     exec_process(process);
-    // }
-
-
-    // for (;;) ;
 }

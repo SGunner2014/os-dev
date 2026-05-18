@@ -37,12 +37,12 @@ interrupt_handler handlers[256];
  * Sets an entry within the idt table.
 */
 static void set_entry(
-    int i, void *isr, unsigned short segment_selector,
-    unsigned char type_attributes
+    int i, void *isr, uint16_t segment_selector,
+    uint8_t type_attributes
 )
 {
-    idt[i].offset_low = (unsigned int) isr & 0xffff;
-    idt[i].offset_high = ((unsigned int) isr >> 16) & 0xffff;
+    idt[i].offset_low = (uint32_t) isr & 0xffff;
+    idt[i].offset_high = ((uint32_t) isr >> 16) & 0xffff;
     idt[i].reserved = 0x0;
     idt[i].segment_selector = segment_selector;
     idt[i].type_attributes = type_attributes;
@@ -51,7 +51,7 @@ static void set_entry(
 
 void idt_init()
 {
-    idt_p.address = (unsigned int) &idt;
+    idt_p.address = (uint32_t) &idt;
     idt_p.size = (sizeof(struct idt_entry) * 256) - 1;
 
     // Initialise all handlers to default handler
@@ -68,7 +68,7 @@ void idt_init()
 
 void handle_interrupt(struct cpu_state *cpu)
 {
-    struct stack_state *stack = (struct stack_state *)((unsigned char *)cpu + sizeof(struct cpu_state));
+    struct stack_state *stack = (struct stack_state *)((uint8_t *)cpu + sizeof(struct cpu_state));
 
     int int_num = stack->int_num;
 
@@ -83,7 +83,7 @@ void handle_interrupt(struct cpu_state *cpu)
 /**
  * Registers a new handler for the specified interrupt number
  */
-void register_interrupt_handler(unsigned int interrupt, interrupt_handler handler)
+void register_interrupt_handler(uint32_t interrupt, interrupt_handler handler)
 {
     handlers[interrupt] = handler;
 }
@@ -112,7 +112,7 @@ void pic_init()
     outb(PIC2_PORT_DATA, 0xff);
 }
 
-void pic_ack(unsigned int interrupt)
+void pic_ack(uint32_t interrupt)
 {
     if (interrupt < PIC1_START_INT || interrupt > PIC2_END_INT)
         return;

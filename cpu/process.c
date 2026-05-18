@@ -3,7 +3,7 @@
 #include "malloc.h"
 #include "gdt.h"
 #include "../misc/utils.h"
-#include "../screen.h"
+#include "../drivers/vga.h"
 
 static uint32_t last_pid = 0;
 static Process *current_process = NULL;
@@ -58,18 +58,12 @@ void exec_process(Process *process)
     // with in the future
     set_tss_stack_pointer(stack_frame_to_stack_pointer(process->kernel_stack));
 
-    prints("jumping to user\n");
+    print("jumping to user\n");
 
-    // Debug process->prog, stack, kernel stack
-    prints("kernel stack: ");
-    printui((uint32_t) process->kernel_stack, 16);
-    prints(" process prog: ");
-    printui((uint32_t) process->prog, 16);
-    prints(" process stack: ");
-    printui((uint32_t) process->stack, 16);
-    prints(" eflags: ");
-    printui((uint32_t) eflags, 16);
-    prints("\n");
+    char buff[64];
+    itoa((uint32_t) process->prog, buff, 16);
+    print(buff);
+    print("\n");
 
     // Jump to user space
     jump_user(

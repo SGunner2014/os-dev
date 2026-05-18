@@ -80,7 +80,9 @@ static void handle_keyboard_interrupt(struct cpu_state *cpu)
         }
     }
 
-    printc(chr);
+    UNUSED(chr);
+
+    // printc(chr);
 
     UNUSED(chr);
 }

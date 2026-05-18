@@ -8,6 +8,7 @@
 #define SYS_READ        3
 #define SYS_WRITE       4
 
+void init_syscalls();
 void handle_syscall(struct cpu_state *cpu);
 
 #endif

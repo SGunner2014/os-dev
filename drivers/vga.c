@@ -1,4 +1,5 @@
 #include "vga.h"
+#include "../misc/utils.h"
 
 #define VGA_WIDTH   80
 #define VGA_HEIGHT  25
@@ -36,10 +37,9 @@ static uint32_t vert(uint32_t pos)
 static void writec(char chr)
 {
     // Stores the current position
-    uint32_t line;
+    uint32_t line = vert(char_pos);
 
     switch (chr) {
-        line = vert(char_pos);
         case '\n':
             if (line == VGA_HEIGHT - 1) { // On last line of screen
                 scroll_screen();
@@ -83,4 +83,10 @@ void clear_screen()
             fb[offset + 1] = 0;
         }
     }
+}
+
+void print(char *buff)
+{
+    uint32_t len = strlen(buff);
+    write(buff, len);
 }
