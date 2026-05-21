@@ -17,13 +17,6 @@ bool check_elf_header(Elf32_Ehdr *hdr)
     return true;
 }
 
-static inline void *elf_load_rel(Elf32_Ehdr *hdr)
-{
-    int result;
-
-    result = elf_load_stage1(hdr);
-}
-
 void *elf_load_file(void *file)
 {
     Elf32_Ehdr *hdr = (Elf32_Ehdr*) file;
