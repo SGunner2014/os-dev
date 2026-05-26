@@ -74,4 +74,19 @@ typedef struct {
 	Elf32_Word	sh_entsize;
 } Elf32_Shdr;
 
+#define ELF_PT_NULL 0
+#define ELF_PT_LOAD 1
+// More to come...
+
+typedef struct {
+    Elf32_Word   p_type;
+    Elf32_Off  p_offset;
+    Elf32_Addr p_vaddr;
+    Elf32_Addr p_paddr;
+    Elf32_Word   p_filesz;
+    Elf32_Word   p_memsz;
+    Elf32_Word   p_flags;
+    Elf32_Word   p_align;
+} Elf32_Phdr;
+
 #endif
