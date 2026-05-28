@@ -13,17 +13,18 @@ static uint32_t char_pos = 0;
 
 static void scroll_screen()
 {
-    for (uint32_t i = 0; i < VGA_WIDTH; i++) {
-        for (uint32_t j = 0; j < VGA_HEIGHT - 1; j++) {
-            uint32_t l_offset = ((j * VGA_HEIGHT) + i) * 2;
-            uint32_t h_offset = ((j * (VGA_HEIGHT + 1)) + i) * 2;
-            fb[l_offset] = fb[h_offset];
-            fb[l_offset + 1] = fb[h_offset + 1];
+    for (uint32_t i = 0; i < VGA_HEIGHT - 1; i++) {
+        for (uint32_t j = 0; j < VGA_WIDTH; j++) {
+            uint32_t c_offset = ((i * VGA_WIDTH) + j) * 2;
+            uint32_t p_offset = (((i + 1) * VGA_WIDTH) + j) * 2;
+            fb[c_offset] = fb[p_offset];
+            fb[c_offset + 1] = fb[p_offset + 1];
         }
     }
 
+    // clear last line
     for (uint32_t i = 0; i < VGA_WIDTH; i++) {
-        uint32_t offset = (((VGA_HEIGHT - 1) * VGA_WIDTH) * 2);
+        uint32_t offset = (((VGA_HEIGHT - 1) * VGA_WIDTH) + i) * 2;
         fb[offset] = 0;
         fb[offset + 1] = 0;
     }

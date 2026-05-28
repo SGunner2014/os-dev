@@ -57,9 +57,12 @@ struct tss_entry {
 typedef struct tss_entry Tss_Entry;
 
 void jump_user(uint32_t eip, uint32_t esp, uint32_t eflags);
+Process *create_empty_process();
 Process *create_process(uint32_t addr, uint32_t size);
 Process *get_current_process();
 void switch_context(Process *process);
 void exec_process(Process *process);
+void map_custom_virt_range(Process *process, uint32_t *phys_start,
+    uint32_t *virt_start, uint32_t size);
 
 #endif

@@ -8,8 +8,10 @@ void init_syscalls()
     register_interrupt_handler(INT_SYSCALL, handle_syscall);
 }
 
-void handle_syscall(struct cpu_state *cpu)
+void handle_syscall(struct cpu_state *cpu, struct stack_state* stack)
 {
+    UNUSED(stack);
+
     switch(cpu->eax) {
         case SYS_WRITE:
             write((char *) cpu->ebx, cpu->ecx);

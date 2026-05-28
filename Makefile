@@ -1,6 +1,6 @@
 PLATFORM = $(shell uname)
 
-OBJECTS = loader.o kmain.o io.o cpu/gdt_asm.o cpu/gdt.o idt.o idt_asm.o misc/utils.o drivers/keyboard.o cpu/mem.o cpu/mem_asm.o cpu/multiboot.o cpu/malloc.o cpu/process.o cpu/user_mode.o drivers/vga.o cpu/syscall.o
+OBJECTS = loader.o kmain.o io.o cpu/gdt_asm.o cpu/gdt.o idt.o idt_asm.o misc/utils.o drivers/keyboard.o cpu/mem.o cpu/mem_asm.o cpu/multiboot.o cpu/malloc.o cpu/process.o cpu/user_mode.o drivers/vga.o cpu/syscall.o misc/elf.o
 # CC = x86_64-elf-gcc
 
 ifeq ($(PLATFORM), Darwin)
@@ -22,8 +22,9 @@ LDFLAGS = -T link.ld -melf_i386
 AS = nasm
 ASFLAGS = -f elf32
 
-programs/program.bin:
-	$(AS) -f bin programs/program.nasm -o programs/program.bin
+programs/program.elf:
+	$(AS) -f elf32 programs/program.nasm -o programs/program.o
+	$(LD) -melf_i386 programs/program.o -o programs/program.elf
 
 all: kernel.elf
 
@@ -33,10 +34,10 @@ disk.img:
 kernel.elf: $(OBJECTS)
 	$(LD) $(LDFLAGS) $(OBJECTS) -o kernel.elf
 
-os.iso: kernel.elf programs/program.bin
+os.iso: kernel.elf programs/program.elf
 	cp kernel.elf iso/boot/kernel.elf
 	mkdir -p iso/modules
-	cp programs/program.bin iso/modules/program.bin
+	cp programs/program.elf iso/modules/program.elf
 	xorriso -as mkisofs -R \
 				  -b boot/grub/stage2_eltorito \
 					-no-emul-boot \
@@ -59,6 +60,7 @@ run: os.iso disk.img
 
 clean:
 	find . -name "*.o" -delete
+	find . -name "*.elf" -delete
 	find . -name "*.bin" -delete
 	rm -f kernel.elf os.iso
 	rm -f disk.img

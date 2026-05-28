@@ -1,6 +1,8 @@
 #include "idt.h"
 #include "io.h"
 
+#include "misc/utils.h"
+
 static struct idt_entry idt[256];
 static struct idt_ptr idt_p;
 
@@ -74,7 +76,7 @@ void handle_interrupt(struct cpu_state *cpu)
 
     if (handlers[int_num] != 0) {
         interrupt_handler handler = handlers[int_num];
-        handler(cpu);
+        handler(cpu, stack);
     }
 
     pic_ack(stack->int_num);

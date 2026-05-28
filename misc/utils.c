@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "../drivers/vga.h"
 
 unsigned int strlen(const char *buff)
 {
@@ -61,6 +62,13 @@ void itoa(const int32_t j, char *buff, const uint32_t base)
 
     // Reverse string
     strrev(buff);
+}
+
+void printui(uint32_t i)
+{
+    char buff[64];
+    itoa(i, buff, 16);
+    print(buff);
 }
 
 char *strcpy(char *buff1, const char *buff2)

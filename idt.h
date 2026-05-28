@@ -36,7 +36,7 @@ struct stack_state {
     uint32_t eflags;
 } __attribute__((packed));
 
-typedef void (*interrupt_handler) (struct cpu_state*);
+typedef void (*interrupt_handler) (struct cpu_state*, struct stack_state*);
 
 void load_idt(struct idt_ptr* table);
 void register_interrupt_handler(uint32_t interrupt, interrupt_handler handler);

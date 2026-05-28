@@ -1,6 +1,7 @@
 #include "mem.h"
 #include "../misc/utils.h"
 #include "process.h"
+#include "../include/errno.h"
 
 
 // Kernel pde, aligned on 4kb
@@ -8,6 +9,7 @@
 // The page table is formed of 1024 pages (pte)
 static pde_t kernel_pde[1024] __attribute__((aligned(PAGE_SIZE)));
 static pte_t kernel_pte[256][1024] __attribute__((aligned(PAGE_SIZE)));
+static uint32_t kernel_virtual_pte[1024] __attribute__((aligned(PAGE_SIZE)));
 // Last virtual address allocated
 static uint32_t last_page_addr = 0;
 // Bitmap to represent all page frames in memory
@@ -268,6 +270,8 @@ void map_page(pde_t *pd, uint32_t virt, uint32_t phys, uint32_t flags)
         uint32_t phys_page = kvirt_to_phys(page);
         pd[pde_offset] = phys_page | PTE_PRESENT | PTE_RW | PTE_USER;
 
+        kernel_virtual_pte[pde_offset] = page;
+
         pt_virt = (pte_t*) page;
 
         // Next, zero out the page table
@@ -275,8 +279,7 @@ void map_page(pde_t *pd, uint32_t virt, uint32_t phys, uint32_t flags)
             pt_virt[i] = 0;
         }
     } else {
-        uint32_t pt_phys = pd[pde_offset] & ~0xFFF;
-        pt_virt = (pte_t*) (pt_phys + PHYS_OFFSET);
+        pt_virt = (pde_t*) kernel_virtual_pte[pde_offset];
     }
 
     // Now we can finally map the virtual addr to the physical one
@@ -369,4 +372,43 @@ void copy_kernel_mappings(Process *process)
     {
         process->page_directory_virt[i] = kernel_pde[i];
     }
+}
+
+/**
+ * Maps a block of virtual addresses to a specified block of physical addresses
+ */
+uint32_t map_virt_range_to_phys(
+    pde_t *pd,
+    uint32_t *virt_start,
+    uint32_t *phys_start,
+    uint32_t size
+)
+{
+    // Enforce page-aligned values
+    if ((uint32_t) virt_start % PAGE_SIZE != 0 ||
+        (uint32_t) phys_start % PAGE_SIZE != 0 ||
+        size % PAGE_SIZE != 0)
+        return ERR_INVAL;
+
+    for (uint32_t i = 0; i < size / PAGE_SIZE; i++) {
+        uint32_t virt_addr = (uint32_t) virt_start + (i * PAGE_SIZE);
+        uint32_t phys_addr = (uint32_t) phys_start + (i * PAGE_SIZE);
+
+        map_page(
+            pd,
+            virt_addr,
+            phys_addr,
+            PTE_PRESENT | PTE_RW | PTE_USER
+        );
+    }
+
+    return 0;
+}
+
+uint32_t *allocate_virt_addr(pde_t *pd, uint32_t *addr)
+{
+    uint32_t phys_addr = allocate_frame();
+    map_page(pd, (uint32_t) addr, phys_addr, PTE_PRESENT | PTE_RW | PTE_USER);
+
+    return addr;
 }

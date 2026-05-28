@@ -8,6 +8,7 @@
 #include "drivers/keyboard.h"
 #include "drivers/vga.h"
 #include "cpu/syscall.h"
+#include "misc/elf.h"
 
 #define FB_GREEN 2
 #define FB_DARK_GREY 8
@@ -39,9 +40,10 @@ void fb_move_cursor(unsigned short pos)
     outb(FB_DATA_PORT, pos & 0x00FF);
 }
 
-void handle_page_fault(struct cpu_state *cpu)
+void handle_page_fault(struct cpu_state *cpu, struct stack_state *stack)
 {
     UNUSED(cpu);
+    UNUSED(stack);
 
     char buff[64];
     uint32_t cr2;
@@ -51,6 +53,11 @@ void handle_page_fault(struct cpu_state *cpu)
 
     itoa(cr2, buff, 16);
     print("Address: ");
+    print(buff);
+    print("\n");
+
+    itoa(stack->error_code, buff, 16);
+    print("Code: ");
     print(buff);
     print("\n");
 
@@ -121,14 +128,27 @@ void kmain(
 
     multiboot_module_t *mod = (multiboot_module_t*) (uint32_t) (multiboot_addr->mods_addr + PHYS_OFFSET);
 
-    Process *process = create_process(mod->mod_start + PHYS_OFFSET, mod->mod_end - mod->mod_start + 1);
+    // Process *process = create_process(mod->mod_start + PHYS_OFFSET, mod->mod_end - mod->mod_start + 1);
+    Process *process = elf_load_file((uint32_t*) (uint32_t) (mod->mod_start + PHYS_OFFSET));
+
 
     print("Created process\n");
 
-    UNUSED(process);
+    itoa((uint32_t) process, buff, 16);
+    print("Process addr: ");
+    print(buff);
+    print("\n");
+
+    itoa((uint32_t) process->prog, buff, 16);
+
+    print("Prog addr: ");
+    print(buff);
+    print("\n");
+
 
     if (multiboot_addr->mods_count == 1)
     {
+        print("Switching context\n");
         switch_context(process);
 
         print("Exec process\n");

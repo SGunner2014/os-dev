@@ -1,4 +1,6 @@
 #include "elf.h"
+#include "../drivers/vga.h"
+#include "utils.h"
 
 bool check_elf_header(Elf32_Ehdr *hdr)
 {
@@ -29,33 +31,61 @@ static Elf32_Phdr *elf_load_phdr(Elf32_Ehdr *hdr, uint32_t num)
     return phdr;
 }
 
-static void *elf_load_p_section(
+static void elf_load_p_section(
     Elf32_Ehdr *hdr,
     uint32_t vaddr,
-    uint32_t p_size,
     uint32_t m_size,
-    uint32_t offset
+    uint32_t offset,
+    Process *process
 )
 {
+    uint8_t *hdr_ptr = (uint8_t*) hdr;
+    hdr_ptr += offset;
+    uint32_t *ptr = (uint32_t*) ((uint32_t) hdr_ptr - PHYS_OFFSET);
 
+    print("Mapping physical: ");
+    char buff[64];
+    itoa((uint32_t) ptr, buff, 16);
+    print(buff);
+    print("\n");
+
+    // We need to go through process and map the virt to phys for the block
+    map_custom_virt_range(process, ptr, (uint32_t*) vaddr, m_size);
+    print("Mapped custom virt range\n");
 }
 
-static void *elf_load_exec(Elf32_Ehdr *hdr)
+static Process *elf_load_exec(Elf32_Ehdr *hdr)
 {
-    for (uint32_t i = 0; i < hdr->e_phnum + 1; i++) {
+    // Initialise a new empty process
+    Process *process = create_empty_process();
+
+    for (uint32_t i = 0; i < (uint32_t) hdr->e_phnum + 1; i++) {
         Elf32_Phdr *p_hdr = elf_load_phdr(hdr, i);
 
         // Only load sections that we need to
         if (p_hdr->p_type == ELF_PT_LOAD) {
             uint32_t vaddr = p_hdr->p_vaddr;
-            uint32_t p_size = p_hdr->p_filesz;
+            // uint32_t p_size = p_hdr->p_filesz;
             uint32_t m_size = p_hdr->p_memsz;
             uint32_t offset = p_hdr->p_offset;
+            elf_load_p_section(
+                hdr,
+                vaddr,
+                m_size,
+                offset,
+                process
+            );
         }
     }
+
+    print("Loaded all sections\n");
+
+    process->prog = (call_module_t) hdr->e_entry;
+
+    return process;
 }
 
-void *elf_load_file(void *file)
+Process *elf_load_file(uint32_t *file)
 {
     Elf32_Ehdr *hdr = (Elf32_Ehdr*) file;
 

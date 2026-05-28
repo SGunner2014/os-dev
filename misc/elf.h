@@ -2,6 +2,7 @@
 #define INCLUDE_ELF_H
 
 #include "../types.h"
+#include "../cpu/process.h"
 
 typedef uint16_t Elf32_Half;	// Unsigned half int
 typedef uint32_t Elf32_Off;	    // Unsigned offset
@@ -59,7 +60,7 @@ enum Elf_Type {
 # define EV_CURRENT	(1)  // ELF Current Version
 
 bool check_elf_header(Elf32_Ehdr *hdr);
-void *elf_load_file(void *file);
+Process *elf_load_file(uint32_t *file);
 
 typedef struct {
 	Elf32_Word	sh_name;

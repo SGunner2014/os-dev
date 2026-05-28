@@ -18,6 +18,8 @@
 #define PTE_PAT         (1u << 7)
 #define PTE_GLOBAL      (1u << 8)
 
+#define EINVAL -1
+
 #define ADDRESS_MASK    0xFFFFF000
 
 #define TOTAL_PAGE_NUMBER (1024 * 1024)
@@ -49,8 +51,15 @@ uint32_t kvirt_to_phys(uint32_t virt);
 
 uint32_t *create_page_directory();
 uint32_t allocate_pages(uint32_t page_count, Process *process);
+uint32_t *allocate_virt_addr(pde_t *pd, uint32_t *addr);
 char is_virt_addr_mapped(uint32_t virt_addr);
 void copy_mem(uint32_t *from, uint32_t *to, uint32_t size);
 void copy_kernel_mappings(Process *process);
+uint32_t map_virt_range_to_phys(
+    pde_t *pd,
+    uint32_t *virt_start,
+    uint32_t *phys_start,
+    uint32_t size
+);
 
 #endif

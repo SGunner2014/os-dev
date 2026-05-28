@@ -1,7 +1,6 @@
 #include "keyboard.h"
 #include "../io.h"
 #include "../misc/utils.h"
-#include "../screen.h"
 
 #define KEYMAP_LENGTH 0x53
 
@@ -12,7 +11,7 @@
 #define CAPS_LOCK_SCANCODE 0x3B
 
 
-static void handle_keyboard_interrupt(struct cpu_state *cpu);
+static void handle_keyboard_interrupt(struct cpu_state *cpu, struct stack_state *stack);
 
 static struct key_flags k_flags;
 static const char lowercase[] = {
@@ -49,9 +48,10 @@ void init_keyboard()
     register_interrupt_handler(33, handle_keyboard_interrupt);
 }
 
-static void handle_keyboard_interrupt(struct cpu_state *cpu)
+static void handle_keyboard_interrupt(struct cpu_state *cpu, struct stack_state *stack)
 {
     UNUSED(cpu);
+    UNUSED(stack);
 
     // The scancode is specified in 0x60 for us by the pic
     unsigned char scancode = inb(0x60);
