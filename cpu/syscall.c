@@ -13,6 +13,9 @@ void handle_syscall(struct cpu_state *cpu, struct stack_state* stack)
     UNUSED(stack);
 
     switch(cpu->eax) {
+        case SYS_EXIT: // TODO: Does nothing atm, I should implement this
+            for (;;) ;
+            break;
         case SYS_WRITE:
             write((char *) cpu->ebx, cpu->ecx);
             break;
