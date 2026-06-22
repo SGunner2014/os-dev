@@ -68,5 +68,6 @@ void switch_context(Process *process);
 void exec_process(Process *process);
 void map_custom_virt_range(Process *process, uint32_t *phys_start,
                            uint32_t *virt_start, uint32_t size);
+uint32_t *brk(Process *process, uint32_t *new_brk);
 
 #endif

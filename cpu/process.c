@@ -133,11 +133,29 @@ uint32_t *brk(Process *process, uint32_t *new_brk)
     uint32_t aligned_old_brk = (uint32_t)get_page_aligned(old_brk);
     uint32_t aligned_new_brk = (uint32_t)get_page_aligned(new_brk);
 
-    uint32_t old_index = aligned_old_brk / PAGE_SIZE;
-    uint32_t page_diff = (aligned_new_brk - aligned_old_brk) / PAGE_SIZE;
+    if (aligned_old_brk == aligned_new_brk) {
+        process->brk = new_brk;
+        return new_brk;
+    }
 
-    UNUSED(page_diff);
-    UNUSED(old_index);
+    if (aligned_new_brk > aligned_old_brk) { // We need to allocate more pages
+        // We want to go through each page after the current brk and allocate it
+        // alloc_page takes page-aligned values one at a time.
+        for (uint32_t i = aligned_old_brk + 4096; i <= aligned_new_brk;
+             i += 4096) {
+            alloc_page(process->page_directory_virt, (uint32_t *)i,
+                       &process->last_virt_addr, process->virtual_pde);
+        }
+    }
+    else { // We need to free some pages
+        // We want to go through each page at the current brk and before, not
+        // including the new brk. Each of these needs to be passed to free_page,
+        // which takes one page-aligned value at a time.
+        for (uint32_t i = aligned_old_brk; i > aligned_new_brk; i -= 4096) {
+            free_page((uint32_t *)i, process->virtual_pde);
+        }
+    }
 
-    return 0;
+    process->brk = new_brk;
+    return new_brk;
 }
