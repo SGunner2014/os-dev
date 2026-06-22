@@ -1,15 +1,13 @@
 #include "malloc.h"
-#include "mem.h"
-#include "../types.h"
 #include "../misc/utils.h"
+#include "../types.h"
+#include "mem.h"
 #include "process.h"
 
 // static Header base;
 // static Header *freep = NULL;
 
-static Heap kernel_heap = {
-    .freep = NULL
-};
+static Heap kernel_heap = {.freep = NULL};
 
 /**
  * Morecore, but for kernel space
@@ -17,10 +15,10 @@ static Heap kernel_heap = {
 Header *kmorecore(uint32_t nunits, Heap *heap)
 {
     uint32_t page_count = ((nunits * sizeof(Header)) / PAGE_SIZE) + 1;
-    Header *p = (Header *) kalloc_page(page_count);
+    Header *p = (Header *)k_alloc_page(NULL);
 
     p->s.size = (page_count * PAGE_SIZE) / sizeof(Header);
-    kfree((void*) (p + 1));
+    kfree((void *)(p + 1));
 
     return heap->freep;
 }
@@ -33,14 +31,17 @@ Header *morecore(uint32_t nunits, Heap *heap)
     Process *process = get_current_process();
 
     uint32_t page_count = ((nunits * sizeof(Header)) / PAGE_SIZE) + 1;
-    Header *p = (Header*) allocate_pages(page_count, process);
+    // Header *p = (Header *)allocate_pages(page_count, process);
+    Header *p =
+        (Header *)alloc_page(process->page_directory_virt, NULL,
+                             &process->last_virt_addr, process->virtual_pde);
 
     p->s.size = (page_count * PAGE_SIZE) / sizeof(Header);
-    free((void*) (p + 1));
+    free((void *)(p + 1));
     return heap->freep;
 }
 
-void *_malloc(uint32_t size, Heap *heap, Header* (*alloc_fn)(uint32_t, Heap*))
+void *_malloc(uint32_t size, Heap *heap, Header *(*alloc_fn)(uint32_t, Heap *))
 {
     uint32_t pages = size / PAGE_SIZE;
     uint32_t units = (size + sizeof(Header) - 1) / sizeof(Header) + 1;
@@ -57,17 +58,18 @@ void *_malloc(uint32_t size, Heap *heap, Header* (*alloc_fn)(uint32_t, Heap*))
         heap->base.s.size = 0;
     }
 
-    for (p = prevp->s.ptr; ; prevp = p, p = p->s.ptr) {
+    for (p = prevp->s.ptr;; prevp = p, p = p->s.ptr) {
         if (p->s.size >= units) {
             if (p->s.size == units) {
                 prevp->s.ptr = p->s.ptr;
-            } else {
+            }
+            else {
                 p->s.size -= units;
                 p += p->s.size;
                 p->s.size = units;
             }
             heap->freep = prevp;
-            return (void*)(p + 1);
+            return (void *)(p + 1);
         }
         if (p == heap->freep) {
             if ((p = alloc_fn(units, heap)) == NULL) {
@@ -77,10 +79,7 @@ void *_malloc(uint32_t size, Heap *heap, Header* (*alloc_fn)(uint32_t, Heap*))
     }
 }
 
-void *kmalloc(uint32_t size)
-{
-    return _malloc(size, &kernel_heap, kmorecore);
-}
+void *kmalloc(uint32_t size) { return _malloc(size, &kernel_heap, kmorecore); }
 
 void *malloc(uint32_t size)
 {
@@ -92,9 +91,10 @@ void _free(void *ap, Heap *heap)
 {
     Header *bp, *p;
 
-    bp = (Header*) ap - 1; // Point to block header
-    // so keep navigating until bp is bigger than p and bp is less then the next elem of p
-    // This indicates that the current block fits in a gap we've found between two elements
+    bp = (Header *)ap - 1; // Point to block header
+    // so keep navigating until bp is bigger than p and bp is less then the next
+    // elem of p This indicates that the current block fits in a gap we've found
+    // between two elements
     for (p = heap->freep; !(bp > p && bp < p->s.ptr); p = p->s.ptr) {
         // If the block fits in either before the existing circular linked list
         // or after the last element in the linked list
@@ -106,7 +106,8 @@ void _free(void *ap, Heap *heap)
     if (bp + bp->s.size == p->s.ptr) {
         bp->s.size += p->s.ptr->s.size;
         bp->s.ptr = p->s.ptr->s.ptr;
-    } else { // Otherwise, the end of this block will point to the next one
+    }
+    else { // Otherwise, the end of this block will point to the next one
         bp->s.ptr = p->s.ptr;
     }
 
@@ -114,17 +115,15 @@ void _free(void *ap, Heap *heap)
     if (p + p->s.size == bp) {
         p->s.size += bp->s.size;
         p->s.ptr = bp->s.ptr;
-    } else { // Otherwise, the end of the previous block will point to this one
+    }
+    else { // Otherwise, the end of the previous block will point to this one
         p->s.ptr = bp;
     }
 
     heap->freep = p;
 }
 
-void kfree(void *ap)
-{
-    _free(ap, &kernel_heap);
-}
+void kfree(void *ap) { _free(ap, &kernel_heap); }
 
 void free(void *ap)
 {

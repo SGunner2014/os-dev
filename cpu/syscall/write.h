@@ -6,7 +6,7 @@
 
 void write(char *buff, uint32_t size)
 {
-
+    print(buff);
 }
 
 #endif

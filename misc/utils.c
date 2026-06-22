@@ -124,3 +124,11 @@ void memset(void *addr, uint32_t value, uint32_t size)
         ptr[i] = value;
     }
 }
+
+void k_panic(char *err)
+{
+    print(err);
+
+    // Halt the processor
+    for (;;) ;
+}
