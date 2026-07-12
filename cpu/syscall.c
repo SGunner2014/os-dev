@@ -3,6 +3,7 @@
 #include "../idt.h"
 #include "../misc/utils.h"
 #include "process.h"
+#include "../abi/stat.h"
 
 void init_syscalls()
 {
@@ -13,7 +14,9 @@ void handle_syscall(struct cpu_state *cpu, struct stack_state *stack)
 {
     UNUSED(stack);
 
-    print("Got a syscall\n");
+    print("Got a syscall: ");
+    printui(cpu->eax);
+    print("\n");
 
     switch (cpu->eax) {
     case SYS_EXIT: // TODO: Does nothing atm, I should implement this
@@ -27,9 +30,15 @@ void handle_syscall(struct cpu_state *cpu, struct stack_state *stack)
         print("Got a syscall for brk\n");
         Process *process = get_current_process();
         uint32_t *_brk = brk(process, (uint32_t *)cpu->ebx);
-        asm volatile("mov %0, %%eax" : : "r"(_brk));
+        cpu->eax = (uint32_t)_brk;
+        break;
+    case SYS_FSTAT:
+        struct abi_stat *st = (struct abi_stat*)cpu->ecx;
+        st->st_mode = ABI_S_IFCHR;
+        cpu->eax = 0;
         break;
     default:
+        for (;;) ;
         break;
     }
 

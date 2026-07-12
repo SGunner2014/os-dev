@@ -68,11 +68,16 @@ void k_init_paging(uint32_t kernel_physical_end)
         last_page_addr = (PHYS_OFFSET) + (i * PAGE_SIZE);
     }
 
-    load_paging_directory((uint32_t)kernel_pde - PHYS_OFFSET);
+    load_kernel_pde();
 
     for (uint32_t i = 0; i < p_count; i++) {
         k_mark_frame_occupied(i);
     }
+}
+
+void load_kernel_pde()
+{
+    load_paging_directory((uint32_t)kernel_pde - PHYS_OFFSET);
 }
 
 /* Frames */
@@ -275,6 +280,23 @@ uint32_t *alloc_page(pde_t *pd, uint32_t *vaddr, uint32_t *last_proc_page_addr,
 }
 
 /**
+ * Allocates a virtual address range
+ */
+uint32_t *alloc_range(pde_t *pd, uint32_t *vaddr, uint32_t size, uint32_t *virtual_pde)
+{
+    KASSERT(is_page_aligned(vaddr));
+
+    uint32_t page_count = size / PAGE_SIZE + 1;
+
+    for (uint32_t i = 0; i < page_count; i++) {
+        uint32_t paddr = k_alloc_free_frame();
+        map_page(pd, (uint32_t) vaddr + i * PAGE_SIZE, paddr, virtual_pde);
+    }
+
+    return vaddr;
+}
+
+/**
  * Frees a virtual address
  *
  * virtual_pde -> The mapping from virt addr -> virt addr of the associated PT.
@@ -370,11 +392,29 @@ pde_t *create_virtual_page_directory()
  */
 void copy_mem(uint32_t *from, uint32_t *to, uint32_t size)
 {
+    // KASSERT(k_is_virt_allocated(from));
+    // KASSERT(k_is_virt_allocated(to));
+
     uint8_t *cto = (uint8_t *)to;
     uint8_t *cfrom = (uint8_t *)from;
 
+    printui((uint32_t) from);
+    print(" to: ");
+    printui((uint32_t) to);
+    print("\n");
+
     for (uint32_t i = 0; i < size; i++) {
+        // print("Setting\n");
         cto[i] = cfrom[i];
+    }
+}
+
+void set_mem(uint32_t *ptr, uint32_t size, uint8_t value)
+{
+    uint8_t *cptr = (uint8_t*)ptr;
+
+    for (uint32_t i = 0; i < size; i++) {
+        cptr[i] = value;
     }
 }
 

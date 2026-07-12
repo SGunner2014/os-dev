@@ -40,6 +40,7 @@ void k_init_paging(
     //   multiboot_info_t *multiboot
     uint32_t kernel_physical_end);
 void k_copy_kernel_mappings(pde_t *pd);
+void load_kernel_pde();
 
 // Frames
 uint32_t k_alloc_free_frame();
@@ -67,6 +68,7 @@ bool k_is_virt_allocated(uint32_t *vaddr);
 uint32_t *
 alloc_page(pde_t *pd, uint32_t *vaddr, uint32_t *last_proc_page_addr,
            uint32_t *virtual_pde); // Returns virt addr, can pass NULL as arg
+uint32_t *alloc_range(pde_t *pd, uint32_t *vaddr, uint32_t size, uint32_t *virtual_pde);
 void free_page(uint32_t *vaddr, uint32_t *virtual_pde);
 uint32_t *virt_to_phys(uint32_t *virtual_pde, uint32_t *vaddr);
 // uint32_t *phys_to_virt ?
@@ -80,6 +82,7 @@ uint32_t *map_virt_range(pde_t *pd, pde_t *virt_pd, uint32_t *vaddr,
  * Utilities
  */
 void copy_mem(uint32_t *from, uint32_t *to, uint32_t size);
+void set_mem(uint32_t *ptr, uint32_t size, uint8_t value);
 bool is_page_aligned(uint32_t *addr);
 uint32_t *get_page_aligned(uint32_t *addr);
 

@@ -28,7 +28,7 @@ static Elf32_Phdr *elf_load_phdr(Elf32_Ehdr *hdr, uint32_t num)
     return phdr;
 }
 
-static void elf_load_p_section(Elf32_Ehdr *hdr, uint32_t vaddr, uint32_t m_size,
+static void elf_load_p_section(Elf32_Ehdr *hdr, uint32_t vaddr, uint32_t f_size, uint32_t m_size,
                                uint32_t offset, Process *process)
 {
     uint8_t *hdr_ptr = (uint8_t *)hdr;
@@ -43,12 +43,24 @@ static void elf_load_p_section(Elf32_Ehdr *hdr, uint32_t vaddr, uint32_t m_size,
 
     // We need to go through process and map the virt to phys for the block
     uint32_t *a_vaddr = get_page_aligned((uint32_t *)vaddr);
-    uint32_t *a_paddr = get_page_aligned(ptr);
+    // uint32_t *a_paddr = get_page_aligned(ptr);
 
-    map_virt_range(process->page_directory_virt, process->virtual_pde, a_vaddr,
-                   a_paddr, m_size);
+    // Figure out how much page-aligned space we need
+    uint32_t m_size_extended = m_size + ((uint32_t) vaddr - (uint32_t) a_vaddr);
+    alloc_range(process->page_directory_virt, a_vaddr, m_size_extended, process->virtual_pde);
 
-    // map_custom_virt_range(process, ptr, (uint32_t*) vaddr, m_size);
+    print("Debug 1\n");
+
+    uint32_t zero_len = m_size - f_size;
+    uint32_t *zero_start = (uint32_t*) (vaddr + f_size);
+
+    switch_context(process);
+
+    copy_mem((uint32_t*) hdr_ptr, (uint32_t*) vaddr, f_size);
+    set_mem(zero_start, zero_len, 0);
+
+    load_kernel_pde();
+
     print("Mapped custom virt range\n");
 }
 
@@ -67,7 +79,7 @@ static Process *elf_load_exec(Elf32_Ehdr *hdr)
         // Only load sections that we need to
         if (p_hdr->p_type == ELF_PT_LOAD) {
             uint32_t vaddr = p_hdr->p_vaddr;
-            // uint32_t p_size = p_hdr->p_filesz;
+            uint32_t f_size = p_hdr->p_filesz;
             uint32_t m_size = p_hdr->p_memsz;
             uint32_t offset = p_hdr->p_offset;
 
@@ -76,7 +88,7 @@ static Process *elf_load_exec(Elf32_Ehdr *hdr)
                 max_vaddr = vaddr_end;
             }
 
-            elf_load_p_section(hdr, vaddr, m_size, offset, process);
+            elf_load_p_section(hdr, vaddr, f_size, m_size, offset, process);
         }
     }
 

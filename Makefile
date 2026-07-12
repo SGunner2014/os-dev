@@ -15,7 +15,7 @@ ASFLAGS = -f elf32
 
 programs/program.elf:
 # 	$(AS) -f elf32 programs/program.nasm -o programs/program.o
-	$(CC) -m32 --sysroot=/home/samgunner.guest/sysroot -o programs/program.elf programs/program.c
+	$(CC) -m32 -o programs/program.elf programs/program.c
 # 	$(LD) -melf_i386 programs/program.o -o programs/program.elf
 
 all: kernel.elf
@@ -45,6 +45,9 @@ os: os.iso disk.img
 
 run: os
 	qemu-system-i386 -cdrom os.iso -m 2048 -serial stdio -d int,cpu_reset -no-reboot -device ahci,id=ahci -drive file=disk.img,id=disk,if=none,format=raw -device ide-hd,drive=disk,bus=ahci.0
+
+debug: os
+	qemu-system-i386 -s -S -cdrom os.iso -m 2048 -serial stdio -d int,cpu_reset -no-reboot -device ahci,id=ahci -drive file=disk.img,id=disk,if=none,format=raw -device ide-hd,drive=disk,bus=ahci.0
 
 %.o: %.c
 	$(CC) $(CFLAGS) $< -o $@
